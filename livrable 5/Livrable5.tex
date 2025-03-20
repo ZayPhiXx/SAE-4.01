@@ -7,6 +7,7 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{bav4}
 
 \title{Livrable 5}
 \author{
@@ -17,43 +18,6 @@ Krainik-Saul Vladimir, Barnouin Clement
 
 \begin{document}
 
-\newtcolorbox[auto counter, number within=section]{configbox}[1]{
-    colback=gray!10, % Fond bleu clair
-    colframe=blue!50, % Bordure bleue
-    sharp corners, % Coins carrés
-    boxrule=0.75pt, % Épaisseur de la bordure
-    fonttitle=\bfseries, % Titre en gras
-    title={Fichier : \texttt{#1}}, % Affiche le nom du fichier
-    fontupper=\ttfamily, % Police monospace pour le contenu
-    left=5pt, right=5pt, top=5pt, bottom=5pt, % Marges internes
-    before skip=10pt, after skip=10pt, % Espacement avant/après la box
-}
-\newtcolorbox{rootcommand}{
-    colback=gray!10, % Fond gris clair
-    colframe=gray!90, % Bordure grise
-    sharp corners, % Coins carrés
-    boxrule=0.5pt, % Épaisseur de la bordure
-    fontupper=\ttfamily, % Police monospace
-    left=3pt, right=3pt, top=3pt, bottom=3pt, % Marges internes
-    %fit to text,
-    %boxrule=0pt,
-    halign=flush left,
-    before upper={\textcolor{gray!70}{\textbf{\#  }}},
-    before skip=5pt, after skip=5pt, % Espacement avant/après la boxS
-}
-\newtcolorbox{command}{
-    colback=gray!10, % Fond gris clair
-    colframe=gray!90!green, % Bordure grise
-    sharp corners, % Coins carrés
-    boxrule=0.5pt, % Épaisseur de la bordure
-    fontupper=\ttfamily, % Police monospace
-    left=3pt, right=3pt, top=3pt, bottom=3pt, % Marges internes
-    halign=flush left,
-    before upper={\textcolor{green!70!black}{\textbf{\$  }}},
-    before skip=5pt, after skip=5pt, % Espacement avant/après la boxS
-}
-
-\include{bav4_style_file}
 
 \maketitle
 
@@ -192,14 +156,14 @@ Enfin, il faut activer l’interface avec
 Ensuite il faut configurer les routes entre les réseaux
 \\
 
-Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}, on devra y chercher la ligne suivante afin de la dé-commenter :
+Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}, on devra y chercher la ligne suivante afin de la dé-commenter :
 
 \begin{figure}[h]
     \centering
     \includegraphics[width=1.2\textwidth]{../assets/image.png}
 \end{figure}
 
-Cette option active donc le **forwarding** (le "**relayage**" des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
+Cette option active donc le **forwarding** (le "**relayage**" des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
 \\
 
 \begin{command}
@@ -273,5 +237,75 @@ nft add rule filtrage_nat postrouting masquerade
 \end{itemize}
 
 \subsection{Serveur DNS}
+Marche a suivre :
+\begin{enumerate}
+	\item Nous allons créer 2 serveur DNS, un serveur Externe, qui va être accessible depuis l’exterieur, et un serveur DNS Interne, qui va être accessible uniquement depuis l’interieur, ca sera utile pour le wiki. 
+	\item On va commencer par créer le DNS privé puis on le clonera pour en faire un DNS public, et il faudra juste supprimer les alias créés pour le wiki et supprimer l’ACL “lan” et l’option lan dans allow-query (voir suite)
+\end{enumerate}
+
+\subsubsection{Installation de BIND9}
+On installe Bind9 avec la commande suivante :
+\rootcmd{apt install bind9 dnsutils}
+
+\subsubsection{Configuration des options DNS}
+nous allons d'abord copier la config pour pouvoir la rétablir facilement en cas d'erreur :
+\rootcmd{cd /etc/bind }
+\rootcmd{cp named.conf.options named.conf.options.bkp}
+\rootcmd{cp named.conf.local named.conf.local.bkp} 
+
+On va ensuite modifier le fichier de config /etc/bind/named.conf.options
+et changer le 0.0.0.0 dans le champ forwarders par le DNS de l'UGA : \ip{152.77.1.22}\\
+Etant donné qu'on créée actuelleùent le DNS privé, on va déclarer une ACL Lan, pour que seul le reseau local puisse y avoir accès (config a mettre avant le champ “option”) :
+\begin{configbox}{/etc/bind/named.conf}
+\begin{lstlisting}
+acl "lan" {
+	192.168.110.0/24;
+	192.168.110.0/24;
+	192.168.110.0/24;
+	localhost;
+	localnets;
+};
+options{ 
+[...] 
+	allow-query { lan; }; 
+};
+\end{lstlisting}
+\end{configbox}
+
+\subsubsection{Configuration de zone}
+Nous allons desormais créer la zone bav4. Dans /etc/bind/named.conf.local ,on ajoute donc la zone suivante:
+
+\begin{configbox}{/etc/bind/named.conf.local}
+\begin{lstlisting}
+zone "bav4.local" {
+    type master;
+    file "/etc/bind/db.bav4.local";
+    allow-update { none; };
+};
+\end{lstlisting}
+\end{configbox}
+Puis nous allons dupliquer la db.local en l’appellant db.bav4.local pour pouvoir configurer la zone : 
+\rootcmd{cp /etc/bind/db.local /etc/bind/db.bav4.local}
+Puis, dans cdb.bav4.local, nous allons mettre en place la config suivante :
+
+\begin{configbox}{/etc/bind/named.conf.local}
+\begin{lstlisting}
+$TTL    604800
+@       IN     SOA    srv-dns.bav4.local.  root.bav4.local. (
+                              1         ; Serial
+                         604800         ; Refresh
+                          86400         ; Retry
+                        2419200         ; Expire
+                         604800 )       ; Negative Cache TTL
+;
+@               IN      NS      srv-dns.bav4.local.
+srv-dns         IN      A       192.168.110.22
+\end{lstlisting}
+\end{configbox}
+Une fois cela fait, on restart bind9 et notre serveur DNS est opérationnel :
+\rootcmd{systemctl restart bind9}
+\rootcmd{systemctl enable named.service}
+
+
 
 \end{document}
