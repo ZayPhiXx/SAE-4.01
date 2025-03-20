@@ -191,11 +191,27 @@ Ensuite il faut configurer les routes entre les réseaux
 \\
 
 Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}, on devra y chercher la ligne suivante afin de la dé-commenter :
-\clearpage
 
-\begin{figure}
+\begin{figure}[h]
+    \centering
     \includegraphics[width=1.2\textwidth]{../assets/image.png}
 \end{figure}
+
+Cette option active donc le **forwarding** (le "**relayage**" des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
+\\
+
+\begin{command}
+    sysctl -p /etc/sysctl.conf
+\end{command}
+
+Mettre en place le NAT (fichier nft a executer) 
+\begin{verbatim}
+echo "1" > /proc/sys/net/ipv4/ip_forward
+nft add table filtrage_nat
+nft 'add chain filtrage_nat prerouting { type nat hook prerouting priority 0 ; }'
+nft 'add chain filtrage_nat postrouting { type nat hook postrouting priority 0 ; }'
+nft add rule filtrage_nat postrouting masquerade
+\end{verbatim}
 
 \subsection{Serveur DHCP}
 
