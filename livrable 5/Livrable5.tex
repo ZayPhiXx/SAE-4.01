@@ -17,9 +17,6 @@ Krainik-Saul Vladimir, Barnouin Clement
 
 \maketitle
 
-\begin{abstract}
-This is the abstract of the document. It provides a brief summary of the content.
-\end{abstract}
 
 \section{Introduction}
 MiniCoffee est un groupe français spécialiste de l’univers du café, connu notamment pour ses machines à café en libre service. Pour l’année 2025, l’entreprise souhaite mettre à jour son infrastructure réseau interne en ajoutant : 
@@ -32,16 +29,23 @@ MiniCoffee est un groupe français spécialiste de l’univers du café, connu n
 Pour cette tâche, MiniCoffee a fait appel à BAV4, notre équipe d’étudiants de l’IUT2 Informatique de Grenoble.
 
 \section{Architecture}
+L'architecture de notre réseau n'a pas énormément changé. 
+Les seules modifications apportées au réseau sont : 
+\begin{itemize}
+    \item Passage d'un LAN à un VLAN pour une meilleure segmentation du réseau.
+    \item Les adresses IP internes se terminent par 1XX.
+    \item Les adresses IP externes se terminent par XX.
+\end{itemize}
 
 \begin{figure}
-    \includegraphics{image.png}
-    \caption{Titre de la figure}
-    \end{figure}
+    \centering
+    \includegraphics[width=1.2\textwidth, trim=0 0 0 2.3cm, clip]{../assets/Architecture.drawio.png}
+    \caption{Architecture réseau de MiniCoffee}
+\end{figure}
 
-\subsection{Subsection}
-This is a subsection. You can add more detailed content here.
+\clearpage
 
-\section{Conclusion}
+\section{Ressources Matérielles utilisées}
 This is the conclusion section. Summarize your findings or the main points of your document here.
 
 \end{document}
