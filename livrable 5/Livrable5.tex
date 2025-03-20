@@ -104,6 +104,8 @@ Nous surveillons régulièrement l’utilisation de la RAM et du stockage afin d
 On va détailler dans cette partie comment nous avons configuré les éléments de notre infrastructure réseau.
 \subsection{Résaux Virtuel}
 
+Nous avons créé des VXLAN pour interconnecter les hyperviseurs au sein du cluster, permettant ainsi une communication entre eux. De plus, nous avons mis en place des VNET spécifiques pour chaque hyperviseur afin de segmenter et d’optimiser la gestion du réseau virtuel, garantissant une meilleure performance et une isolation accrue des ressources.
+
 \subsection{Routeurs}
 Tout d'abord, il faut configurer les interfaces de la machine qui va servir de routeur.
 
@@ -214,6 +216,61 @@ nft add rule filtrage_nat postrouting masquerade
 \end{verbatim}
 
 \subsection{Serveur DHCP}
+
+\begin{itemize}
+    \item Creer une VM avec une @IP statique car c’est lui qui donne les IPs
+    \item Installer kea : \begin{rootcommand} apt install kea-dhcp4-server \end{rootcommand}
+    \item Reset la config : \begin{rootcommand} mv /etc/kea/kea-dhcp4.conf /etc/kea/kea-dhcp4.conf.bkp \end{rootcommand}
+    \item Ajouter les configuration du serveur dans le fichier \textbf{etc/kea/kea/kea-dhcp4.conf}
+    \item Fichier de configuration type
+    \newpage
+    \begin{verbatim}
+        {
+    "Dhcp4": {
+        "interfaces-config": {
+            "interfaces": [
+                "ens33"
+            ]
+        },
+        "valid-lifetime": 691200,
+        "renew-timer": 345600,
+        "rebind-timer": 604800,
+        "authoritative": true,
+        "lease-database": {
+            "type": "memfile",
+            "persist": true,
+            "name": "/var/lib/kea/kea-leases4.csv",
+            "lfc-interval": 3600
+        },
+        "subnet4": [
+            {
+                "subnet": "192.168.14.0/24",
+                "pools": [
+                    {
+                        "pool": "192.168.14.100 - 192.168.14.120"
+                    }
+                ],
+                "option-data": [
+                    {
+                        "name": "domain-name-servers",
+                        "data": "192.168.14.201"
+                    },
+                    {
+                        "name": "domain-search",
+                        "data": "it-connect.local"
+                    },
+                    {
+                        "name": "routers",
+                        "data": "192.168.14.2"
+                    }
+                ]
+            }
+        ]
+    }
+}
+    \end{verbatim}
+
+\end{itemize}
 
 \subsection{Serveur DNS}
 
