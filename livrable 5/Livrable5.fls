@@ -1151,11 +1151,6 @@ INPUT /usr/local/texlive/2023/texmf-dist/tex/latex/base/t1cmtt.fd
 INPUT /usr/local/texlive/2023/texmf-dist/tex/latex/base/t1cmtt.fd
 INPUT /usr/local/texlive/2023/texmf-dist/tex/latex/base/t1cmtt.fd
 INPUT /usr/local/texlive/2023/texmf-dist/tex/latex/base/t1cmtt.fd
-INPUT ../assets/image.png
-INPUT ../assets/image.png
-INPUT ../assets/image.png
-INPUT ../assets/image.png
-INPUT ../assets/image.png
 INPUT Livrable5.aux
 OUTPUT Livrable5.upb
 INPUT ./Livrable5.upa

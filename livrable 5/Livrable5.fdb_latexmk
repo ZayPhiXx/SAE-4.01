@@ -1,8 +1,7 @@
 # Fdb version 4
-["pdflatex"] 1742570298 "/Users/sam/Documents/BUT2/SAE-4.01/livrable 5/Livrable5.tex" "Livrable5.pdf" "Livrable5" 1742570299 0
+["pdflatex"] 1742571151 "/Users/sam/Documents/BUT2/SAE-4.01/livrable 5/Livrable5.tex" "Livrable5.pdf" "Livrable5" 1742571152 0
   "../assets/Architecture.drawio.png" 1742456891 460036 afd5ae4657b166e454c28569919982b2 ""
-  "../assets/image.png" 1742461684 2319 743c0b24039e2271ac297e32adf96d8f ""
-  "/Users/sam/Documents/BUT2/SAE-4.01/livrable 5/Livrable5.tex" 1742570295 13156 e41eadd7b193f338b873ac3adcbbacce ""
+  "/Users/sam/Documents/BUT2/SAE-4.01/livrable 5/Livrable5.tex" 1742571150 13867 94bd512fde29d48369bead68912303df ""
   "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc" 1136849721 2900 1537cc8184ad1792082cd229ecc269f4 ""
   "/usr/local/texlive/2023/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -194,11 +193,11 @@
   "/usr/local/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map" 1707814095 4623355 b8cad38412faebe1ce5b780a45db67bd ""
   "/usr/local/texlive/2023/texmf-var/web2c/pdftex/pdflatex.fmt" 1707814057 7883460 42267228e485f791b7341f1d7b485df5 ""
   "/usr/local/texlive/2023/texmf.cnf" 1678822455 577 1b2b1af17af2508fb20dd85783af4050 ""
-  "Livrable5.aux" 1742570299 2153 64ef02480b81efafe1598b553c04c42d "pdflatex"
-  "Livrable5.out" 1742570299 817 3a90f32e917ea715079aa366eacab82d "pdflatex"
-  "Livrable5.tex" 1742570295 13156 e41eadd7b193f338b873ac3adcbbacce ""
-  "Livrable5.upa" 1742570298 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
-  "Livrable5.upb" 1742570299 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "Livrable5.aux" 1742571152 2153 0cd475bb32f92f7771c5d8322e43884d "pdflatex"
+  "Livrable5.out" 1742571152 817 3a90f32e917ea715079aa366eacab82d "pdflatex"
+  "Livrable5.tex" 1742571150 13867 94bd512fde29d48369bead68912303df ""
+  "Livrable5.upa" 1742571151 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
+  "Livrable5.upb" 1742571152 0 d41d8cd98f00b204e9800998ecf8427e "pdflatex"
   "bav4.sty" 1742570295 2771 32317f80e49bb42a8c4355f74ffead57 ""
   (generated)
   "Livrable5.aux"
