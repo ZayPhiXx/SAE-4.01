@@ -1,0 +1,72 @@
+\ProvidesPackage{bav4}
+
+\RequirePackage{xcolor} % Pour les couleurs
+\RequirePackage{tcolorbox} % Pour les boîtes stylisées
+\RequirePackage{pdfcomment}
+\RequirePackage{hyperref}
+\tcbuselibrary{listingsutf8} % Support UTF-8
+\tcbuselibrary{skins}
+
+% Définition d'un alias pour une commande utilisateur ($ vert)
+\newtcolorbox{command}{
+    colback=gray!10, % Fond gris clair
+    colframe=gray!90!green, % Bordure grise
+    sharp corners, % Coins carrés
+    boxrule=0.5pt, % Épaisseur de la bordure
+    fontupper=\ttfamily, % Police monospace
+    left=3pt, right=3pt, top=3pt, bottom=3pt, % Marges internes
+    halign=flush left,
+    before upper={\textcolor{green!70!black}{\textbf{\$  }}},
+    before skip=5pt, after skip=5pt, % Espacement avant/après la boxS
+}
+
+% Définition d'un alias pour une commande root (# blanc)
+\newtcolorbox{rootcommand}{
+    colback=gray!10, % Fond gris clair
+    colframe=gray!90, % Bordure grise
+    sharp corners, % Coins carrés
+    boxrule=0.5pt, % Épaisseur de la bordure
+    fontupper=\ttfamily, % Police monospace
+    left=3pt, right=3pt, top=3pt, bottom=3pt, % Marges internes
+    %fit to text,
+    %boxrule=0pt,
+    halign=flush left,
+    before upper={\textcolor{gray!70}{\textbf{\#  }}},
+    before skip=5pt, after skip=5pt, % Espacement avant/après la boxS
+}
+\newtcolorbox[auto counter, number within=section]{configbox}[1]{
+    colback=gray!10, % Fond bleu clair
+    colframe=blue!50, % Bordure bleue
+    sharp corners, % Coins carrés
+    boxrule=0.75pt, % Épaisseur de la bordure
+    fonttitle=\bfseries, % Titre en gras
+    title={Fichier : \texttt{#1}}, % Affiche le nom du fichier
+    fontupper=\ttfamily, % Police monospace pour le contenu
+    left=5pt, right=5pt, top=5pt, bottom=5pt, % Marges internes
+    before skip=10pt, after skip=10pt, % Espacement avant/après la box
+}
+\newtcolorbox{ipbox}{
+	colback=green!20, % Fond gris clair
+    colframe=green!70!black, % Bordure grise
+    width=110pt,
+    sharp corners, % Coins carrés
+    boxrule=0.5pt, % Épaisseur de la bordure\\
+    left=0pt, right=0pt, top=0pt, bottom=0pt,
+    before upper={\textcolor{green!70!black}{\textbf{IP:  }}}
+}
+\newtcolorbox{portbox}{
+	colback=yellow!20, % Fond gris clair
+    colframe=yellow!70!black, % Bordure grise
+    width=80pt,
+    on line,
+    sharp corners, % Coins carrés
+    boxrule=0.5pt, % Épaisseur de la bordure\\
+    left=0pt, right=0pt, top=0pt, bottom=0pt,
+    before upper={\textcolor{yellow!70!black}{\textbf{port:  }}}
+}
+
+% alias pour la mif
+\newcommand{\port}[1]{\raisebox{-5pt}{\begin{portbox}#1\end{portbox}}}
+\newcommand{\ip}[1]{\raisebox{-5pt}{\begin{ipbox}#1\end{ipbox}}}
+\newcommand{\cmd}[1]{\begin{command}\texttt{#1}\end{command}}
+\newcommand{\rootcmd}[1]{\begin{rootcommand}\texttt{#1}\end{rootcommand}}

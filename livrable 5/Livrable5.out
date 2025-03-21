@@ -1,0 +1,11 @@
+\BOOKMARK [1][-]{section.1}{Introduction}{}% 1
+\BOOKMARK [1][-]{section.2}{Architecture}{}% 2
+\BOOKMARK [1][-]{section.3}{Ressources\040Mat\351rielles\040utilis\351es}{}% 3
+\BOOKMARK [1][-]{section.4}{Installation\040et\040Configuration\040des\040\351l\351ments\040de\040l'infrastrucure}{}% 4
+\BOOKMARK [2][-]{subsection.4.1}{R\351saux\040Virtuel}{section.4}% 5
+\BOOKMARK [2][-]{subsection.4.2}{Routeurs}{section.4}% 6
+\BOOKMARK [2][-]{subsection.4.3}{Serveur\040DHCP}{section.4}% 7
+\BOOKMARK [2][-]{subsection.4.4}{Serveur\040DNS}{section.4}% 8
+\BOOKMARK [3][-]{subsubsection.4.4.1}{Installation\040de\040BIND9}{subsection.4.4}% 9
+\BOOKMARK [3][-]{subsubsection.4.4.2}{Configuration\040des\040options\040DNS}{subsection.4.4}% 10
+\BOOKMARK [3][-]{subsubsection.4.4.3}{Configuration\040de\040zone}{subsection.4.4}% 11
