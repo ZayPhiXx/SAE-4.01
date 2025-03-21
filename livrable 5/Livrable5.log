@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdflatex 2025.3.6)  20 MAR 2025 11:25
+This is pdfTeX, Version 3.141592653-2.6-1.40.24 (TeX Live 2022/Debian) (preloaded format=pdflatex 2025.3.6)  21 MAR 2025 17:20
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -653,6 +653,9 @@ Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 2
 Package zref Info: New property list: pdfcomment on input line 2735.
 Package zref Info: New property: PCPDFOBJID on input line 2736.
 )
+(/usr/share/texlive/texmf-dist/tex/latex/base/fontenc.sty
+Package: fontenc 2021/04/29 v2.0v Standard LaTeX package
+)
 (/usr/share/texlive/texmf-dist/tex/latex/tcolorbox/tcblistingsutf8.code.tex
 Library (tcolorbox): 'tcblistingsutf8.code.tex' version '5.1.1'
 (/usr/share/texlive/texmf-dist/tex/latex/tcolorbox/tcblistings.code.tex
@@ -729,12 +732,13 @@ File: tikzlibrarytopaths.code.tex 2023-01-15 v3.1.10 (3.1.10)
 Library (tcolorbox): 'tcbskinsjigsaw.code.tex' version '5.1.1'
 ))
 \c@tcb@cnt@configbox=\count328
+\c@tcb@cnt@codebox=\count329
 ) (/usr/share/texlive/texmf-dist/tex/latex/l3backend/l3backend-pdftex.def
 File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
-\l__color_backend_stack_int=\count329
+\l__color_backend_stack_int=\count330
 \l__pdf_internal_box=\box77
 )
-(./Livrable5.aux (./bav4_style_file.aux))
+(./Livrable5.aux)
 \openout1 = `Livrable5.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 19.
@@ -758,16 +762,16 @@ LaTeX Font Info:    ... okay on input line 19.
 
 (/usr/share/texlive/texmf-dist/tex/context/base/mkii/supp-pdf.mkii
 [Loading MPS to PDF converter (version 2006.09.02).]
-\scratchcounter=\count330
+\scratchcounter=\count331
 \scratchdimen=\dimen269
 \scratchbox=\box78
-\nofMPsegments=\count331
-\nofMParguments=\count332
+\nofMPsegments=\count332
+\nofMParguments=\count333
 \everyMPshowfont=\toks41
-\MPscratchCnt=\count333
+\MPscratchCnt=\count334
 \MPscratchDim=\dimen270
-\MPnumerator=\count334
-\makeMPintoPDFobject=\count335
+\MPnumerator=\count335
+\makeMPintoPDFobject=\count336
 \everyMPtoPDFconversion=\toks42
 ) (/usr/share/texlive/texmf-dist/tex/latex/epstopdf-pkg/epstopdf-base.sty
 Package: epstopdf-base 2020-01-24 v2.11 Base part for package epstopdf
@@ -778,7 +782,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 4
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Liv
 e
 ))
-\c@lstlisting=\count336
+\c@lstlisting=\count337
 Package soulpos Info: Loading soulutf8 on input line 19.
 
 (/usr/share/texlive/texmf-dist/tex/generic/soulutf8/soulutf8.sty
@@ -797,6 +801,8 @@ Package: soul 2003/11/17 v2.4 letterspacing/underlining (mf)
 \SOUL@ulht=\dimen273
 ))
 Package hyperref Info: Link coloring OFF on input line 19.
+ (./Livrable5.out)
+(./Livrable5.out)
 \@outlinefile=\write5
 \openout5 = `Livrable5.out'.
 
@@ -804,7 +810,7 @@ Package hyperref Info: Link coloring OFF on input line 19.
 (/usr/share/texlive/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
 )
-<../assets/Architecture.drawio.png, id=7, 2759.30875pt x 1701.35625pt>
+<../assets/Architecture.drawio.png, id=51, 2759.30875pt x 1701.35625pt>
 File: ../assets/Architecture.drawio.png Graphic file (type png)
 <use ../assets/Architecture.drawio.png>
 Package pdftex.def Info: ../assets/Architecture.drawio.png  used on input line 
@@ -845,17 +851,12 @@ File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
 (Font)              Font shape `T1/cmtt/m/n' tried instead on input line 108.
-
-Underfull \hbox (badness 10000) in paragraph at lines 119--120
-[][][][][][][][][]
- []
-
-[4] [5]
+ [4]
 Underfull \hbox (badness 10000) in paragraph at lines 156--158
 
  []
 
-<../assets/image.png, id=85, 568.1225pt x 34.1275pt>
+<../assets/image.png, id=81, 568.1225pt x 34.1275pt>
 File: ../assets/image.png Graphic file (type png)
 <use ../assets/image.png>
 Package pdftex.def Info: ../assets/image.png  used on input line 163.
@@ -866,11 +867,14 @@ Overfull \hbox (68.99895pt too wide) in paragraph at lines 163--164
  []
 
 
+LaTeX Warning: `h' float specifier changed to `ht'.
+
+
 Underfull \hbox (badness 10000) in paragraph at lines 166--168
 
  []
 
-
+[5]
 Overfull \hbox (80.14618pt too wide) in paragraph at lines 177--177
 []\T1/cmtt/m/n/10 nft 'add chain filtrage_nat prerouting { type nat hook prerou
 ting priority 0 ; }'[] 
@@ -889,56 +893,54 @@ Overfull \hbox (21.16672pt too wide) in paragraph at lines 214--214
  []
 
 [7]
-Overfull \hbox (48.16476pt too wide) in paragraph at lines 256--273
+LaTeX Font Info:    Trying to load font information for T1+pcr on input line 25
+7.
+ (/usr/share/texlive/texmf-dist/tex/latex/psnfss/t1pcr.fd
+File: t1pcr.fd 2001/06/04 font definitions for T1/pcr.
+)
+Overfull \hbox (4.16476pt too wide) in paragraph at lines 256--273
 \T1/cmr/m/n/10 changer le 0.0.0.0 dans le champ for-warders par le DNS de l'UGA
- : [] 
+ : \T1/pcr/m/n/10 152.77.1.22 
  []
 
-[8]
-Underfull \hbox (badness 10000) in paragraph at lines 294--295
-[][][][][][][][][][][][][][][][][][][][][][][][][]
- []
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 299--300
-[][][][][][][][][]
- []
-
-[9] [10] (./Livrable5.aux
-* soulpos - computing points - it may take a few seconds *
+[8] (/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2020/03/24 1.8d listings language file
+)
+(/usr/share/texlive/texmf-dist/tex/latex/listings/lstlang1.sty
+File: lstlang1.sty 2020/03/24 1.8d listings language file
+) [9]
+(./Livrable5.aux * soulpos - computing points - it may take a few seconds *
 \openout4 = `Livrable5.upb'.
 
- (./Livrable5.upa))
 
-Package rerunfilecheck Warning: File `Livrable5.out' has changed.
-(rerunfilecheck)                Rerun to get outlines right
-(rerunfilecheck)                or use package `bookmark'.
-
-Package rerunfilecheck Info: Checksums for `Livrable5.out':
-(rerunfilecheck)             Before: <no file>
-(rerunfilecheck)             After:  3A90F32E917EA715079AA366EACAB82D;817.
+(./Livrable5.upa))
+Package rerunfilecheck Info: File `Livrable5.out' has not changed.
+(rerunfilecheck)             Checksum: 3A90F32E917EA715079AA366EACAB82D;817.
  ) 
 Here is how much of TeX's memory you used:
- 29969 strings out of 478051
- 601980 string characters out of 5840944
- 1896330 words of memory out of 5000000
- 49559 multiletter control sequences out of 15000+600000
- 521735 words of font info for 53 fonts, out of 8000000 for 9000
+ 30157 strings out of 478051
+ 604456 string characters out of 5840944
+ 2006330 words of memory out of 5000000
+ 49726 multiletter control sequences out of 15000+600000
+ 524199 words of font info for 58 fonts, out of 8000000 for 9000
  14 hyphenation exceptions out of 8191
- 104i,6n,104p,573b,1260s stack positions out of 10000i,1000n,20000p,200000b,200000s
- </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600
-pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.60
-0pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.6
-00pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1000.
-600pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1000
-.600pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx144
-0.600pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm12
-00.600pk> </home/skarb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1
-728.600pk>
-Output written on Livrable5.pdf (10 pages, 328011 bytes).
+ 104i,6n,104p,573b,1603s stack positions out of 10000i,1000n,20000p,200000b,200000s
+{/usr/share/texlive/texmf-dist/fonts/enc/dvips/base/8r.enc} </home/skarb/.tex
+live2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt0800.600pk> </home/skarb/.te
+xlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm0500.600pk> </home/skarb/.t
+exlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ectt1000.600pk> </home/skarb/.
+texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1000.600pk> </home/skarb/
+.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1200.600pk> </home/skarb
+/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/tcrm1000.600pk> </home/skar
+b/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1000.600pk> </home/ska
+rb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecbx1440.600pk> </home/sk
+arb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1200.600pk> </home/s
+karb/.texlive2022/texmf-var/fonts/pk/ljfour/jknappen/ec/ecrm1728.600pk></usr/sh
+are/texlive/texmf-dist/fonts/type1/urw/courier/ucrr8a.pfb>
+Output written on Livrable5.pdf (9 pages, 350281 bytes).
 PDF statistics:
- 487 PDF objects out of 1000 (max. 8388607)
- 177 compressed objects within 2 object streams
- 94 named destinations out of 1000 (max. 500000)
- 29 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 592 PDF objects out of 1000 (max. 8388607)
+ 225 compressed objects within 3 object streams
+ 97 named destinations out of 1000 (max. 500000)
+ 117 words of extra memory for PDF output out of 10000 (max. 10000000)
 
