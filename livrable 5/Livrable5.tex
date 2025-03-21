@@ -8,7 +8,10 @@
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{scalerel}
 \usepackage{bav4}
+
+\newcommand{\gear}{\scalerel*{\includegraphics[height=1em]{../assets/gear.png}}{\textrm{X}}}
 
 \title{Livrable 5}
 \author{
@@ -21,6 +24,9 @@ Krainik-Saul Vladimir, Schicke Samuel,
 
 
 \maketitle
+
+\tableofcontents
+\clearpage
 
 
 \section{Introduction}
@@ -72,6 +78,7 @@ On va détailler dans cette partie comment nous avons configuré les éléments 
 Nous avons créé des VXLAN pour interconnecter les hyperviseurs au sein du cluster, permettant ainsi une communication entre eux. De plus, nous avons mis en place des VNET spécifiques pour chaque hyperviseur afin de segmenter et d’optimiser la gestion du réseau virtuel, garantissant une meilleure performance et une isolation accrue des ressources.
 
 \subsection{Routeurs}
+\subsubsection{Configuration des interfaces}
 Tout d'abord, il faut configurer les interfaces de la machine qui va servir de routeur.
 
 Il faut configurer le fichier \textbf{/etc/network/interfaces} pour attribuer les bonnes ip et CIDR pour chaque interface. Voici un explique de chaque paramètre que l’on peut mettre :
@@ -151,12 +158,7 @@ Une fois le fichier configurer, il redémarrer le service avec
 \begin{command}
 sudo systemctl restart networking.service
 \end{command}
-Enfin, il faut activer l’interface avec 
-\begin{command}
-    ifup [nomInterface]
-\end{command}
-Ensuite il faut configurer les routes entre les réseaux
-\\
+\subsubsection{Configuration des routes entre les réseaux}
 
 Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}, on devra y chercher la ligne suivante afin de la dé-commenter :
 
@@ -164,7 +166,7 @@ Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme do
     \texttt{\# Uncomment the next line to enable packet forwarding for IPv4 net.ipv4.ip\_forward=1}
 \end{configbox}
 
-Cette option active donc le **forwarding** (le "**relayage**" des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
+Cette option active donc le \textbf{forwarding} (le \textbf{relayage} des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
 \\
 
 \begin{command}

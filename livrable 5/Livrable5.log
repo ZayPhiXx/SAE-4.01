@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.2.13)  21 MAR 2025 16:32
+This is pdfTeX, Version 3.141592653-2.6-1.40.25 (TeX Live 2023) (preloaded format=pdflatex 2024.2.13)  21 MAR 2025 17:12
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -332,6 +332,28 @@ Package: etoolbox 2020/10/05 v2.5k e-TeX tools for LaTeX (JAW)
 \tcb@temp=\box67
 \tcb@temp=\box68
 \tcb@temp=\box69
+) (/usr/local/texlive/2023/texmf-dist/tex/latex/scalerel/scalerel.sty
+Package: scalerel 2016/12/29 v1.8 Routines for constrained scaling and stretching of objects, relative to a reference object or in absolute terms
+ (/usr/local/texlive/2023/texmf-dist/tex/latex/tools/calc.sty
+Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
+\calc@Acount=\count298
+\calc@Bcount=\count299
+\calc@Adimen=\dimen259
+\calc@Bdimen=\dimen260
+\calc@Askip=\skip53
+\calc@Bskip=\skip54
+LaTeX Info: Redefining \setlength on input line 80.
+LaTeX Info: Redefining \addtolength on input line 81.
+\calc@Ccount=\count300
+\calc@Cskip=\skip55
+)
+\thesrwidth=\skip56
+\thesrheight=\skip57
+\srblobheight=\skip58
+\srblobdepth=\skip59
+\mnxsrwidth=\skip60
+\LMex=\skip61
+\LMpt=\skip62
 ) (./bav4.sty
 Package: bav4 
  (/usr/local/texlive/2023/texmf-dist/tex/latex/pdfcomment/pdfcomment.sty
@@ -342,25 +364,25 @@ Package: xkeyval 2022/06/16 v2.9 package option processing (HA)
 \XKV@toks=\toks38
 \XKV@tempa@toks=\toks39
 )
-\XKV@depth=\count298
+\XKV@depth=\count301
 File: xkeyval.tex 2014/12/03 v2.7a key=value parser (HA)
 ))
-\c@pc@count@i=\count299
-\c@pc@count@ii=\count300
-\c@pc@count@iii=\count301
-\c@pc@count@iv=\count302
+\c@pc@count@i=\count302
+\c@pc@count@ii=\count303
+\c@pc@count@iii=\count304
+\c@pc@count@iv=\count305
 \pc@mathannot@box=\box70
 \pc@nullbox=\box71
-\pc@dima=\skip53
-\pc@dimb=\skip54
-\pc@Sposx=\skip55
-\pc@Sposy=\skip56
-\pc@Eposx=\skip57
-\pc@Eposy=\skip58
-\pc@column=\skip59
-\pc@box@width=\skip60
-\pc@box@height=\skip61
-\pc@box@depth=\skip62
+\pc@dima=\skip63
+\pc@dimb=\skip64
+\pc@Sposx=\skip65
+\pc@Sposy=\skip66
+\pc@Eposx=\skip67
+\pc@Eposy=\skip68
+\pc@column=\skip69
+\pc@box@width=\skip70
+\pc@box@height=\skip71
+\pc@box@depth=\skip72
  (/usr/local/texlive/2023/texmf-dist/tex/latex/datetime2/datetime2.sty
 Package: datetime2 2021/03/21 v1.5.7 (NLCT) date and time formats
  (/usr/local/texlive/2023/texmf-dist/tex/latex/tracklang/tracklang.sty
@@ -395,23 +417,11 @@ Package zref Info: New property list: savepos on input line 79.
 Package zref Info: New property: posx on input line 81.
 Package zref Info: New property: posy on input line 82.
 )
-\c@zref@unique=\count303
+\c@zref@unique=\count306
  (/usr/local/texlive/2023/texmf-dist/tex/latex/refcount/refcount.sty
 Package: refcount 2019/12/15 v3.6 Data extraction from label references (HO)
 ) (/usr/local/texlive/2023/texmf-dist/tex/latex/base/ifthen.sty
 Package: ifthen 2022/04/13 v1.1d Standard LaTeX ifthen package (DPC)
-) (/usr/local/texlive/2023/texmf-dist/tex/latex/tools/calc.sty
-Package: calc 2017/05/25 v4.3 Infix arithmetic (KKT,FJ)
-\calc@Acount=\count304
-\calc@Bcount=\count305
-\calc@Adimen=\dimen259
-\calc@Bdimen=\dimen260
-\calc@Askip=\skip63
-\calc@Bskip=\skip64
-LaTeX Info: Redefining \setlength on input line 80.
-LaTeX Info: Redefining \addtolength on input line 81.
-\calc@Ccount=\count306
-\calc@Cskip=\skip65
 ) (/usr/local/texlive/2023/texmf-dist/tex/latex/marginnote/marginnote.sty
 Package: marginnote 2018/08/09 v1.4b non floating margin notes for LaTeX
 \c@mn@abspage=\count307
@@ -516,7 +526,7 @@ Package: uniquecounter 2019/12/15 v1.4 Provide unlimited unique counter (HO)
 )
 Package uniquecounter Info: New unique counter `rerunfilecheck' on input line 285.
 )
-\Hy@SectionHShift=\skip66
+\Hy@SectionHShift=\skip73
 )
 Package zref Info: New property list: pdfcomment on input line 2735.
 Package zref Info: New property: PCPDFOBJID on input line 2736.
@@ -593,24 +603,24 @@ File: l3backend-pdftex.def 2023-01-16 L3 backend support: PDF output (pdfTeX)
 ) (./Livrable5.aux)
 \openout1 = `Livrable5.aux'.
 
-LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
-LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 20.
-LaTeX Font Info:    ... okay on input line 20.
+LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMS/cmsy/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OT1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for T1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for TS1/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for OMX/cmex/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for U/cmr/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PD1/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
+LaTeX Font Info:    Checking defaults for PU/pdf/m/n on input line 23.
+LaTeX Font Info:    ... okay on input line 23.
 
 *geometry* driver: auto-detecting
 *geometry* detected driver: pdftex
@@ -666,7 +676,7 @@ Package epstopdf-base Info: Redefining graphics rule for `.eps' on input line 48
 File: epstopdf-sys.cfg 2010/07/13 v1.3 Configuration of (r)epstopdf for TeX Live
 ))
 \c@lstlisting=\count339
-Package soulpos Info: Loading soulutf8 on input line 20.
+Package soulpos Info: Loading soulutf8 on input line 23.
  (/usr/local/texlive/2023/texmf-dist/tex/generic/soul/soulutf8.sty
 Package: soulutf8 2023-02-18 v3.0 Permit use of UTF-8 characters in soul (HO)
 
@@ -695,91 +705,97 @@ Package: soul-ori 2023-02-18 v3.0 letterspacing/underlining (mf)
 \SOUL@comma=\count341
 \SOUL@apo=\count342
 \SOUL@grave=\count343
-\SOUL@spaceskip=\skip67
+\SOUL@spaceskip=\skip74
 \SOUL@ttwidth=\dimen285
 \SOUL@uldp=\dimen286
 \SOUL@ulht=\dimen287
 ))
-Package hyperref Info: Link coloring OFF on input line 20.
+Package hyperref Info: Link coloring OFF on input line 23.
  (./Livrable5.out) (./Livrable5.out)
 \@outlinefile=\write5
 \openout5 = `Livrable5.out'.
 
+ (./Livrable5.toc)
+\tf@toc=\write6
+\openout6 = `Livrable5.toc'.
+
  (/usr/local/texlive/2023/texmf-dist/tex/generic/stringenc/se-pdfdoc.def
 File: se-pdfdoc.def 2019/11/29 v1.12 stringenc: PDFDocEncoding
-)
-<../assets/Architecture.drawio.png, id=51, 2759.30875pt x 1701.35625pt>
-File: ../assets/Architecture.drawio.png Graphic file (type png)
-<use ../assets/Architecture.drawio.png>
-Package pdftex.def Info: ../assets/Architecture.drawio.png  used on input line 47.
-(pdftex.def)             Requested size: 2759.30205pt x 1635.91086pt.
-
-
-LaTeX Warning: Float too large for page by 83.33636pt on input line 49.
-
-[1
+) [1
 
 \openout4 = `Livrable5.upa'.
 
-{/usr/local/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}{/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [2 <../assets/Architecture.drawio.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 54--56
+{/usr/local/texlive/2023/texmf-var/fonts/map/pdftex/updmap/pdftex.map}{/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc}]
+<../assets/Architecture.drawio.png, id=83, 2759.30875pt x 1701.35625pt>
+File: ../assets/Architecture.drawio.png Graphic file (type png)
+<use ../assets/Architecture.drawio.png>
+Package pdftex.def Info: ../assets/Architecture.drawio.png  used on input line 53.
+(pdftex.def)             Requested size: 2759.30205pt x 1635.91086pt.
+
+
+LaTeX Warning: Float too large for page by 83.33636pt on input line 55.
+
+[2
+
+{/usr/local/texlive/2023/texmf-dist/fonts/enc/dvips/cm-super/cm-super-ts1.enc}] [3 <../assets/Architecture.drawio.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 60--62
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 63--65
+Underfull \hbox (badness 10000) in paragraph at lines 69--71
 
  []
 
-[3
+[4
 
 ]
-LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 109.
+LaTeX Font Info:    Trying to load font information for T1+cmtt on input line 116.
  (/usr/local/texlive/2023/texmf-dist/tex/latex/base/t1cmtt.fd
 File: t1cmtt.fd 2022/07/10 v2.5l Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `T1/cmtt/bx/n' in size <10> not available
-(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 109.
- [4]
-Underfull \hbox (badness 10000) in paragraph at lines 158--160
-
+(Font)              Font shape `T1/cmtt/m/n' tried instead on input line 116.
+ [5]
+Overfull \hbox (2.68056pt too wide) in paragraph at lines 163--164
+\T1/cmr/m/n/10 On doit donc ac-tiver cette fonc-tion-nal-ité qui est sous la forme d'un op-tion dans le fichier \T1/cmr/bx/n/10 /etc/sysctl.conf\T1/cmr/m/n/10 ,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 164--165
+Underfull \hbox (badness 10000) in paragraph at lines 166--167
 []\T1/cmtt/m/n/10 # Uncomment the next line to enable packet forwarding for IPv4
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 167--169
+Underfull \hbox (badness 10000) in paragraph at lines 169--171
 
  []
 
-[5] [6]
-Overfull \hbox (4.92517pt too wide) in paragraph at lines 222--223
+[6] [7]
+Overfull \hbox (4.92517pt too wide) in paragraph at lines 224--225
 [][][][][][][][][][][][][][][] 
  []
 
-[7] [8] [9] (./Livrable5.aux * soulpos - computing points - it may take a few seconds *
+[8] [9] [10] (./Livrable5.aux * soulpos - computing points - it may take a few seconds *
 \openout4 = `Livrable5.upb'.
 
  (./Livrable5.upa))
 Package rerunfilecheck Info: File `Livrable5.out' has not changed.
-(rerunfilecheck)             Checksum: 3A90F32E917EA715079AA366EACAB82D;817.
+(rerunfilecheck)             Checksum: A0367F718CCF773A500814041C21F180;1031.
  ) 
 Here is how much of TeX's memory you used:
- 30652 strings out of 476025
- 617472 string characters out of 5790017
- 1899388 words of memory out of 5000000
- 50496 multiletter control sequences out of 15000+600000
- 521735 words of font info for 53 fonts, out of 8000000 for 9000
+ 30737 strings out of 476025
+ 618931 string characters out of 5790017
+ 1898388 words of memory out of 5000000
+ 50570 multiletter control sequences out of 15000+600000
+ 522189 words of font info for 55 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 104i,8n,104p,621b,1334s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 104i,8n,104p,621b,1332s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1200.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sfrm1728.pfb></usr/local/texlive/2023/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb>
-Output written on Livrable5.pdf (9 pages, 392789 bytes).
+Output written on Livrable5.pdf (10 pages, 394594 bytes).
 PDF statistics:
- 290 PDF objects out of 1000 (max. 8388607)
- 258 compressed objects within 3 object streams
- 141 named destinations out of 1000 (max. 500000)
- 112 words of extra memory for PDF output out of 10000 (max. 10000000)
+ 318 PDF objects out of 1000 (max. 8388607)
+ 285 compressed objects within 3 object streams
+ 145 named destinations out of 1000 (max. 500000)
+ 128 words of extra memory for PDF output out of 10000 (max. 10000000)
 
