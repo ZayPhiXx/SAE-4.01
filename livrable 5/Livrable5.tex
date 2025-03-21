@@ -2,17 +2,21 @@
 
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
+\usepackage[a4paper, margin=1in]{geometry}
 \usepackage{amsmath}
 \usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{tcolorbox}
+\usepackage{scalerel}
 \usepackage{bav4}
+
+\newcommand{\gear}{\scalerel*{\includegraphics[height=1em]{../assets/gear.png}}{\textrm{X}}}
 
 \title{Livrable 5}
 \author{
-Schicke Samuel, Burellier Loucas, Amberny Peran, \\
-Krainik-Saul Vladimir, Barnouin Clement
+Amberny Peran, Barnouin Clement, Burellier Loucas, \\
+Krainik-Saul Vladimir, Schicke Samuel, 
 }
 \date{\today}
 
@@ -20,6 +24,9 @@ Krainik-Saul Vladimir, Barnouin Clement
 
 
 \maketitle
+
+\tableofcontents
+\clearpage
 
 
 \section{Introduction}
@@ -43,7 +50,7 @@ Les seules modifications apportées au réseau sont :
 
 \begin{figure}
     \centering
-    \includegraphics[width=1.2\textwidth, trim=0 0 0 2.3cm, clip]{../assets/Architecture.drawio.png}
+    \includegraphics[angle=-90, width=1\textwidth, trim=0 0 0 2.3cm, clip]{../assets/Architecture.drawio.png}
     \caption{Architecture réseau de MiniCoffee}
 \end{figure}
 
@@ -71,6 +78,7 @@ On va détailler dans cette partie comment nous avons configuré les éléments 
 Nous avons créé des VXLAN pour interconnecter les hyperviseurs au sein du cluster, permettant ainsi une communication entre eux. De plus, nous avons mis en place des VNET spécifiques pour chaque hyperviseur afin de segmenter et d’optimiser la gestion du réseau virtuel, garantissant une meilleure performance et une isolation accrue des ressources.
 
 \subsection{Routeurs}
+\subsubsection{Configuration des interfaces}
 Tout d'abord, il faut configurer les interfaces de la machine qui va servir de routeur.
 
 Il faut configurer le fichier \textbf{/etc/network/interfaces} pour attribuer les bonnes ip et CIDR pour chaque interface. Voici un explique de chaque paramètre que l’on peut mettre :
@@ -116,7 +124,8 @@ Voici un fichier de configuration type pour un routeur avec plusieurs interface 
         auto eth1
         iface eth1 inet static
             address 192.168.1.1/24
-            gateway 192.168.1.254  # Facultatif, utilise uniquement si ce reseau doit 
+            gateway 192.168.1.254  
+            # Facultatif, utilise uniquement si ce reseau doit 
             sortir par une autre route
             dns-nameservers 192.168.1.1 8.8.8.8
             dns-domain lan1.local
@@ -149,21 +158,15 @@ Une fois le fichier configurer, il redémarrer le service avec
 \begin{command}
 sudo systemctl restart networking.service
 \end{command}
-Enfin, il faut activer l’interface avec 
-\begin{command}
-    ifup [nomInterface]
-\end{command}
-Ensuite il faut configurer les routes entre les réseaux
-\\
+\subsubsection{Configuration des routes entre les réseaux}
 
 Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}, on devra y chercher la ligne suivante afin de la dé-commenter :
 
-\begin{figure}[h]
-    \centering
-    \includegraphics[width=1.2\textwidth]{../assets/image.png}
-\end{figure}
+\begin{configbox}{/etc/sysctl.conf}
+    \texttt{\# Uncomment the next line to enable packet forwarding for IPv4 net.ipv4.ip\_forward=1}
+\end{configbox}
 
-Cette option active donc le **forwarding** (le "**relayage**" des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
+Cette option active donc le \textbf{forwarding} (le \textbf{relayage} des paquets) d'une interface à une autre ou plus précisément d'un réseau à un autre. On pourra ensuite reloader notre sysctl :
 \\
 
 \begin{command}
@@ -188,51 +191,57 @@ nft add rule filtrage_nat postrouting masquerade
     \item Ajouter les configuration du serveur dans le fichier \textbf{etc/kea/kea/kea-dhcp4.conf}
     \item Fichier de configuration type
     \newpage
-    \begin{verbatim}
-        {
-    "Dhcp4": {
-        "interfaces-config": {
-            "interfaces": [
-                "ens33"
-            ]
-        },
-        "valid-lifetime": 691200,
-        "renew-timer": 345600,
-        "rebind-timer": 604800,
-        "authoritative": true,
-        "lease-database": {
-            "type": "memfile",
-            "persist": true,
-            "name": "/var/lib/kea/kea-leases4.csv",
-            "lfc-interval": 3600
-        },
-        "subnet4": [
+    \begin{configbox}{/etc/kea/kea-dhcp4.conf.bkp}
+        \begin{lstlisting}
             {
-                "subnet": "192.168.14.0/24",
-                "pools": [
-                    {
-                        "pool": "192.168.14.100 - 192.168.14.120"
-                    }
-                ],
-                "option-data": [
-                    {
-                        "name": "domain-name-servers",
-                        "data": "192.168.14.201"
+                "Dhcp4": {
+                    "interfaces-config": {
+                        "interfaces": [
+                            "ens33"
+                        ]
                     },
-                    {
-                        "name": "domain-search",
-                        "data": "it-connect.local"
+                    "valid-lifetime": 691200,
+                    "renew-timer": 345600,
+                    "rebind-timer": 604800,
+                    "authoritative": true,
+                    "lease-database": {
+                        "type": "memfile",
+                        "persist": true,
+                        "name": "/var/lib/kea/kea-leases4.csv",
+                        "lfc-interval": 3600
                     },
-                    {
-                        "name": "routers",
-                        "data": "192.168.14.2"
-                    }
-                ]
+                    "subnet4": [
+                        {
+                            "subnet": "192.168.14.0/24",
+                            "pools": [
+                                {
+                                    "pool": "192.168.14.100 
+                                    - 192.168.14.120"
+                                }
+                            ],
+                            "option-data": [
+                                {
+                                    "name": "domain-name-servers",
+                                    "data": "192.168.14.201"
+                                },
+                                {
+                                    "name": "domain-search",
+                                    "data": "it-connect.local"
+                                },
+                                {
+                                    "name": "routers",
+                                    "data": "192.168.14.2"
+                                }
+                            ]
+                        }
+                    ]
+                }
             }
-        ]
-    }
-}
-    \end{verbatim}
+        \end{lstlisting}
+       
+        
+
+    \end{configbox}
 
 \end{itemize}
 
