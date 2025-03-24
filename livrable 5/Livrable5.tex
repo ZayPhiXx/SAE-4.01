@@ -169,30 +169,38 @@ Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme do
 \end{command}
 
 Mettre en place le NAT (fichier nft a executer) 
-\begin{verbatim}
-echo "1" > /proc/sys/net/ipv4/ip_forward
+\begin{codebox}{filtrage-nat}
+\begin{lstlisting}[language=Bash]
 nft add table filtrage_nat
 nft 'add chain filtrage_nat prerouting { type nat hook prerouting priority 0 ; }'
 nft 'add chain filtrage_nat postrouting { type nat hook postrouting priority 0 ; }'
 nft add rule filtrage_nat postrouting masquerade
-\end{verbatim}
+\end{lstlisting}
+\end{codebox}
 
 \subsection{Serveur DHCP}
 
+\subsubsection{Installation}
 \begin{itemize}
     \item Creer une VM avec une @IP statique car c’est lui qui donne les IPs
     \item Installer kea : \begin{rootcommand} apt install kea-dhcp4-server \end{rootcommand}
-    \item Reset la config : \begin{rootcommand} mv /etc/kea/kea-dhcp4.conf /etc/kea/kea-dhcp4.conf.bkp \end{rootcommand}
-    \item Ajouter les configuration du serveur dans le fichier \textbf{etc/kea/kea/kea-dhcp4.conf}
-    \item Fichier de configuration type
+\end{itemize}
+
+\subsubsection{Configuration}
+\begin{itemize}
+    \item Sauvegarder la configuration pour la réstaurer en cas de problème 
+    \rootcmd{mv /etc/kea/kea-dhcp4.conf /etc/kea/kea-dhcp4.conf.bkp}
+    \item Ajouter les configuration du serveur dans le fichier 
+    \textbf{/etc/kea/kea-dhcp4.conf}
+\end{itemize}
     \newpage
-    \begin{configbox}{/etc/kea/kea-dhcp4.conf.bkp}
-        \begin{lstlisting}
+\begin{configbox}{/etc/kea/kea-dhcp4.conf.bkp}
+    \begin{lstlisting}
             {
                 "Dhcp4": {
                     "interfaces-config": {
                         "interfaces": [
-                            "ens33"
+                            "ens18"
                         ]
                     },
                     "valid-lifetime": 691200,
@@ -207,37 +215,43 @@ nft add rule filtrage_nat postrouting masquerade
                     },
                     "subnet4": [
                         {
-                            "subnet": "192.168.14.0/24",
+                            "subnet": "192.168.120.0/24",
                             "pools": [
                                 {
-                                    "pool": "192.168.14.100 
-                                    - 192.168.14.120"
+                                    "pool": "192.168.120.10
+                                    - 192.168.120.200"
                                 }
                             ],
                             "option-data": [
                                 {
                                     "name": "domain-name-servers",
-                                    "data": "192.168.14.201"
+                                    "data": "192.168.110.22"
                                 },
                                 {
                                     "name": "domain-search",
-                                    "data": "it-connect.local"
+                                    "data": "bav4.local"
                                 },
                                 {
                                     "name": "routers",
-                                    "data": "192.168.14.2"
+                                    "data": "192.168.120.1"
                                 }
                             ]
-                        }
+                        },
+                        [... Ajouter autant de subnet que de sous reseaux sont concernes]
                     ]
                 }
             }
-        \end{lstlisting}
-       
-        
-
-    \end{configbox}
-
+    \end{lstlisting}
+\end{configbox}
+\begin{itemize}
+	\item (L2) \monosp{"Dhcp4"} : Indique que l'attribution est faite avec des @IPv4
+	\item (L3-5) Indique l'interface qui emettra les DHCP response
+	\item (L8-11) Configuration des differents temps de sauvegarde/renouvellement...
+	\item (L12-17) Configuration de la base de donnée qui contiendras les données DHCP
+	\item (L18) \monosp{"subnet4"} : Indique que le subnet spécifié est en IPv4
+	\item (L20) \monosp{ "subnet": "192.168.14.0/24"} : indique le sous reseau ou le serveur DHCP attribue les adresses.
+	\item (L21-26) Configure les differents intervalles IP attribués
+	\item (L27-L39) Configure les options DHCP (@IP du serveur DNS, adresse du serveur DNS, @IP du routeur)
 \end{itemize}
 
 \subsection{Serveur DNS}
@@ -257,15 +271,15 @@ nous allons d'abord copier la config pour pouvoir la rétablir facilement en cas
 \rootcmd{cp named.conf.options named.conf.options.bkp}
 \rootcmd{cp named.conf.local named.conf.local.bkp} 
 
-On va ensuite modifier le fichier de config /etc/bind/named.conf.options
-et changer le 0.0.0.0 dans le champ forwarders par le DNS de l'UGA : \ip{152.77.1.22}\\
-Etant donné qu'on créée actuelleùent le DNS privé, on va déclarer une ACL Lan, pour que seul le reseau local puisse y avoir accès (config a mettre avant le champ “option”) :
+Nous allons ensuite modifier le fichier de config /etc/bind/named.conf.options
+et changer le \ip{0.0.0.0} dans le champ forwarders par le DNS de l'UGA : \ip{152.77.1.22}\\
+Etant donné qu'on créée actuellement le DNS privé, on va déclarer une ACL Lan, pour que seul le reseau local puisse y avoir accès (config a mettre avant le champ “option”) :
 \begin{configbox}{/etc/bind/named.conf}
 \begin{lstlisting}
 acl "lan" {
 	192.168.110.0/24;
-	192.168.110.0/24;
-	192.168.110.0/24;
+	192.168.120.0/24;
+	192.168.130.0/24;
 	localhost;
 	localnets;
 };
@@ -275,6 +289,12 @@ options{
 };
 \end{lstlisting}
 \end{configbox}
+
+\begin{itemize}
+	\item (L1) \monosp{acl "lan"} : On déclare une ACL appellée "lan", qui permet que seule les @Ip spécifiées auront accès au serveur DNS
+	\item (L2-7) Déclarations des sous-réseaux concernés par l'ACL
+	\item (L10) \monosp{allow-query { lan; };} indique que seuls les sous-réseaux de l'ACL peuvent query le serveur DNS
+\end{itemize}
 
 \subsubsection{Configuration de zone}
 Nous allons desormais créer la zone bav4. Dans /etc/bind/named.conf.local ,on ajoute donc la zone suivante:
@@ -306,6 +326,20 @@ $TTL    604800
 srv-dns         IN      A       192.168.110.22
 \end{lstlisting}
 \end{configbox}
+
+\begin{itemize}
+	\item (L3) Numéro de serie
+	\item (L4) Délai de rafraichissement pour la synchronisation des configurations entre plusieurs serveurs DNS
+	\item (L5) Délai au bout duquel un serveur DNS secondaire devra retenter une synchronisation
+	\item (L6) Temps d'expiration du serveur DNS
+	\item (L7) Durée de conservation dans le cache de l'information "NXDOMAIN"
+	\item (L9-LXX) Création des enregistrement DNS : plusieurs formes possibles :
+	\begin{enumerate}
+		\item \textbf{Lien nom-@IP :}	<nom-de-l'hote>   	IN	A		<@IP>
+		\item \textbf{Lien alias-nom :}	<nom-de-l'alias> 	IN	CNAME 	<nom-de-l'enregistrement-de-référence>
+	\end{enumerate}		  
+\end{itemize}
+
 Une fois cela fait, on restart bind9 et notre serveur DNS est opérationnel :
 \rootcmd{systemctl restart bind9}
 \rootcmd{systemctl enable named.service}
