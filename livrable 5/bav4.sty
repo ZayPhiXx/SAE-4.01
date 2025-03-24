@@ -2,12 +2,12 @@
 \RequirePackage{xcolor} % Pour les couleurs
 \RequirePackage{tcolorbox} % Pour les boîtes stylisées
 \RequirePackage{pdfcomment}
+\RequirePackage{scalerel}
 \RequirePackage{hyperref}
 \RequirePackage{fontenc}
 \tcbuselibrary{listingsutf8} % Support UTF-8
 \tcbuselibrary{skins}
 
-% Définir la configuration lstset inspirée de Visual Studio Code
 \lstset{
   basicstyle=\ttfamily\footnotesize,    % Police monospacée et petite taille
   keywordstyle=\color{blue}\bfseries,   % Mots-clés en bleu et en gras
@@ -23,6 +23,7 @@
   commentstyle=\color{gray!50!green},  % Commentaires en gris-vert
   stringstyle=\color{red!50},         % Chaînes de caractères en rouge
 }
+\newcommand{\gear}{\scalerel*{\includegraphics[height=1em]{../assets/gear.png}}{\textrm{X}}}
 
 
 % Définition d'un alias pour une commande utilisateur ($ vert)
@@ -58,7 +59,7 @@
     sharp corners, % Coins carrés
     boxrule=0.75pt, % Épaisseur de la bordure
     fonttitle=\bfseries, % Titre en gras
-    title={\textbf{config} - \texttt{#1}}, % Affiche le nom du fichier
+    title={\gear \texttt{#1}}, % Affiche le nom du fichier
     fontupper=\ttfamily, % Police monospace pour le contenu
     left=5pt, right=5pt, top=5pt, bottom=5pt, % Marges internes
     before skip=10pt, after skip=10pt, % Espacement avant/après la box

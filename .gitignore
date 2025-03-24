@@ -1,0 +1,34 @@
+# Fichiers temporaires et de compilation
+*.aux
+*.bbl
+*.blg
+*.brf
+*.idx
+*.ilg
+*.ind
+*.lof
+*.log
+*.lot
+*.out
+*.toc
+*.nav
+*.snm
+*.synctex.gz
+*.synctex
+*.fdb_latexmk
+*.fls
+
+# Fichiers de l'éditeur
+*.bak
+*.swp
+*.swo
+*.tmp
+*.backup
+
+# Sorties PDF et autres formats compilés
+*.pdf
+*.dvi
+*.ps
+
+# Dossiers générés
+_build/
