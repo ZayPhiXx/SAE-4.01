@@ -2,6 +2,7 @@
 \RequirePackage{xcolor} % Pour les couleurs
 \RequirePackage{tcolorbox} % Pour les boîtes stylisées
 \RequirePackage{pdfcomment}
+\RequirePackage{underscore}
 \RequirePackage{scalerel}
 \RequirePackage{hyperref}
 \RequirePackage{fontenc}
@@ -42,7 +43,7 @@
 % Définition d'un alias pour une commande root (# blanc)
 \newtcolorbox{rootcommand}{
     colback=gray!10, % Fond gris clair
-    colframe=gray!90, % Bordure grise
+    colframe=gray!80, % Bordure grise
     sharp corners, % Coins carrés
     boxrule=0.5pt, % Épaisseur de la bordure
     fontupper=\ttfamily, % Police monospace
@@ -52,6 +53,18 @@
     halign=flush left,
     before upper={\textcolor{gray!70}{\textbf{\#  }}},
     before skip=5pt, after skip=5pt, % Espacement avant/après la boxS
+}
+\newtcolorbox{commandout}{
+    colback=gray!10, % Fond gris clair
+    sharp corners, % Coins carrés
+    boxrule=0pt, % Épaisseur de la bordure
+    fontupper=\ttfamily, % Police monospace
+    left=3pt, right=3pt, top=3pt, bottom=3pt, % Marges internes
+    %fit to text,
+    %boxrule=0pt,
+    halign=flush left,
+    before upper={\textcolor{gray!70}{\textbf{out : }}},
+    before skip=0pt, after skip=5pt, % Espacement avant/après la boxS
 }
 \newtcolorbox[auto counter, number within=section]{configbox}[1]{
     colback=gray!10, % Fond bleu clair
@@ -85,3 +98,5 @@
 \newcommand{\ip}[1]{{\fontfamily{pcr}\selectfont #1}}
 \newcommand{\cmd}[1]{\begin{command}\texttt{#1}\end{command}}
 \newcommand{\rootcmd}[1]{\begin{rootcommand}\texttt{#1}\end{rootcommand}}
+\newcommand{\com}[1]{\colorbox{red!70}{#1}}
+\newcommand{\cmdout}[1]{\begin{commandout}#1\end{commandout}}

@@ -510,4 +510,76 @@ A chaque connection, on effectuera en plus la commande \cmd{su -c /tmp/scriptDoT
 	 \item (L3) Ouverture d'une liaison ssh
 \end{itemize}
 
+
+\subsection{Wiki}
+
+SAMUEL EXPLIQUE UN PEU LE WIKI ET SON CHOIX
+
+\subsubsection{Prérequis}
+
+\begin{enumerate}
+	\item Nous allons commencer par installer les packages \monosp{curl}, \monosp{software-properties-common},  \monosp{postgreSQL}, \monosp{node.js} :
+\rootcmd{apt install -y curl software-properties-common}
+\rootcmd{curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - }
+\com{Samuel c'est quoi ca ?}
+\rootcmd{apt install -y nodejs postgresql}
+	\item On se connecte ensuite la base postgres : \cmd{su -i -u postgres psql}
+	\item On crée la base wikijs et l'utilisateur postgres wikiuser :
+	\begin{codebox}{shell postgres}
+\begin{lstlisting}
+CREATE DATABASE wikijs;
+CREATE USER wikiuser WITH ENCRYPTED PASSWORD 'motdepasse';
+GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikiuser;
+\q
+\end{lstlisting}
+\end{codebox}
+\end{enumerate}
+
+\subsubsection{Installation / Configuration de WikiJS}
+
+\begin{enumerate}
+	\item On installe wikijs et on install le serveur node.js :
+\cmd{mkdir /var/www/wikiJS \&\& cd /var/www/wikiJS}
+\cmd{curl -fsSL https://get.requarks.io/wiki/latest.tar.gz | tar xz -C .}
+\com{SAM : Ca me semble treeees limite pour bonnaud, pas d'update possible ?}
+\cmd{npm install}
+\end{enumerate}
+\cmd{npm install}
+\begin{commandout}
+\begin{lstlisting}
+Selem l'output
+
+RHZHIDNZNd
+\end{lstlisting}
+\end{commandout}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 \end{document}
