@@ -70,7 +70,7 @@ En termes de mémoire vive (RAM), chaque machine de notre réseau dispose actuel
 Nous surveillons régulièrement l’utilisation de la RAM et du stockage afin d’optimiser notre infrastructure si nécessaire et d’anticiper toute montée en charge.
 
 \section{Installation et Configuration des éléments de l'infrastrucure}
-On va détailler dans cette partie comment nous avons configuré les éléments de notre infrastructure réseau.
+Nous allons détailler dans cette partie comment nous avons configuré les éléments de notre infrastructure réseau.
 \subsection{Résaux Virtuel}
 
 Nous avons créé des VXLAN pour interconnecter les hyperviseurs au sein du cluster, permettant ainsi une communication entre eux. De plus, nous avons mis en place des VNET spécifiques pour chaque hyperviseur afin de segmenter et d’optimiser la gestion du réseau virtuel, garantissant une meilleure performance et une isolation accrue des ressources.
@@ -85,7 +85,7 @@ Il faut configurer le fichier \textbf{/etc/network/interfaces} pour attribuer le
 
 
 
-Voici un fichier de configuration type pour un routeur avec plusieurs interface :
+Voici un fichier de configuration type pour un routeur avec plusieurs interfaces :
 
 \begin{configbox}{/etc/network/interfaces}
     \begin{lstlisting}
@@ -127,7 +127,7 @@ Voici un fichier de configuration type pour un routeur avec plusieurs interface 
     via 10.10.0.1 dev eth2 
     \end{lstlisting}
 \end{configbox}
-
+\paragraph{Détail de la configuration}
 \begin{itemize}
     \item Une première ligne avec la façon d’on l’interface s’active.
     \begin{itemize}
@@ -148,25 +148,24 @@ Voici un fichier de configuration type pour un routeur avec plusieurs interface 
         \item (L13) \monosp{dns-nameservers 192.168.1.1 8.8.8.8} : Les DNS
         \item (L14) \monosp{dns-domain lan1.local} : Le domaine DNS
         \item \monosp{metric 10} : La priorité de l'utilisation de cette interface. Plus la valeur est basse, plus la priorité est haute.
-        \item \monosp{up ip addr add 192.168.100.15/24 dev [nomInterface]} : Si tu veux plusieurs adresses IP sur la même interface
+        \item \monosp{up ip addr add 192.168.100.15/24 dev [nomInterface]} : Si l'on souhaite plusieurs adresses IP sur la même interface
         \item (L4) \monosp{mtu 1450} : MTU maximum
         \item (L33) \monosp{post-up ip route add 192.168.1.0/24 via 192.168.100.10} : Si la machine doit accéder à un réseau via une passerelle spécifique. Tout le trafic vers 192.168.200.0/24 passera via 192.168.100.10.
     \end{itemize}
 \end{itemize}
 
-Une fois le fichier configurer, il redémarrer le service avec 
-\begin{command}
-sudo systemctl restart networking.service
-\end{command}
+Une fois le fichier configuré, il redémarrer le service avec 
+\rootcmd{systemctl restart networking.service}
+
 \subsubsection{Configuration des routes entre les réseaux}
-
-Par défaut, une machine Linux ne fait pas passer n'importe quel paquet comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}.
-
+\com{Pas sur de l'explication les sangs ?}
+Par défaut, une machine Linux ne fait pas passer n'importe quel paquet \com{c'est le but d'avoir des routeurs ?} comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}.
 
 \begin{command}
     sysctl -p /etc/sysctl.conf
 \end{command}
 
+\com{<La partie qui suit devrait être dans les routeurs non ?}
 Mettre en place le NAT (fichier nft a executer) 
 \begin{codebox}{filtrage-nat}
 \begin{lstlisting}[language=Bash]
@@ -178,70 +177,71 @@ nft add rule filtrage_nat postrouting masquerade
 \end{codebox}
 
 \subsection{Serveur DHCP}
+Afin de pouvoir attribuer des @IP de façon automatique, nous allons installer un serveur DHCP, le logiciel que nous allons utiliser pour le DHCP s'appelle \monosp{Kea}. Kea est un serveur DHCP développé par l'ISC, conçu pour être plus flexible et performant que ISC DHCP. Kea supporte IPv4 et IPv6 et est particulièrement adapté aux environnements à grande échelle nécessitant une gestion avancée des adresses IP
+
 
 \subsubsection{Installation}
 \begin{itemize}
-    \item Creer une VM avec une @IP statique car c’est lui qui donne les IPs
-    \item Installer kea : \begin{rootcommand} apt install kea-dhcp4-server \end{rootcommand}
+    \item Nous créons une VM avec une @IP statique car c’est cette dernière qui attribuera les @IP.
+    \item Installation de Kea : \rootcmd{apt install kea-dhcp4-server}
 \end{itemize}
 
 \subsubsection{Configuration}
 \begin{itemize}
-    \item Sauvegarder la configuration pour la réstaurer en cas de problème 
+    \item Nous sauvegardons la configuration pour la restaurer en cas de problème 
     \rootcmd{mv /etc/kea/kea-dhcp4.conf /etc/kea/kea-dhcp4.conf.bkp}
-    \item Ajouter les configuration du serveur dans le fichier 
-    \textbf{/etc/kea/kea-dhcp4.conf}
+    \item Nous créons par la suite le fichier \monosp{/etc/kea/kea-dhcp4.conf} qui doit contenir la configuration suivante :
 \end{itemize}
     \newpage
 \begin{configbox}{/etc/kea/kea-dhcp4.conf.bkp}
     \begin{lstlisting}
-            {
-                "Dhcp4": {
-                    "interfaces-config": {
-                        "interfaces": [
-                            "ens18"
-                        ]
-                    },
-                    "valid-lifetime": 691200,
-                    "renew-timer": 345600,
-                    "rebind-timer": 604800,
-                    "authoritative": true,
-                    "lease-database": {
-                        "type": "memfile",
-                        "persist": true,
-                        "name": "/var/lib/kea/kea-leases4.csv",
-                        "lfc-interval": 3600
-                    },
-                    "subnet4": [
-                        {
-                            "subnet": "192.168.120.0/24",
-                            "pools": [
-                                {
-                                    "pool": "192.168.120.10
-                                    - 192.168.120.200"
-                                }
-                            ],
-                            "option-data": [
-                                {
-                                    "name": "domain-name-servers",
-                                    "data": "192.168.110.22"
-                                },
-                                {
-                                    "name": "domain-search",
-                                    "data": "bav4.local"
-                                },
-                                {
-                                    "name": "routers",
-                                    "data": "192.168.120.1"
-                                }
-                            ]
-                        },
-                        [... Ajouter autant de subnet que de sous reseaux sont concernes]
-                    ]
-                }
-            }
+{
+"Dhcp4": {
+	"interfaces-config": {
+		"interfaces": [
+			"ens18"
+		]
+	},
+	"valid-lifetime": 691200,
+	"renew-timer": 345600,
+	"rebind-timer": 604800,
+	"authoritative": true,
+	"lease-database": {
+		"type": "memfile",
+		"persist": true,
+		"name": "/var/lib/kea/kea-leases4.csv",
+		"lfc-interval": 3600
+	},
+	"subnet4": [
+		{
+			"subnet": "192.168.120.0/24",
+			"pools": [
+				{
+					"pool": "192.168.120.10 - 192.168.120.200"
+				}
+			],
+			"option-data": [
+				{
+					"name": "domain-name-servers",
+					"data": "192.168.110.22"
+				},
+				{
+					"name": "domain-search",
+					"data": "bav4.local"
+				},
+				{
+					"name": "routers",
+					"data": "192.168.120.1"
+				}
+			]
+		},
+[... Ajouter autant de subnet que de sous reseaux sont concernes]
+	]
+}
+}
     \end{lstlisting}
 \end{configbox}
+\paragraph{Détail de la configuration}
 \begin{itemize}
 	\item (L2) \monosp{"Dhcp4"} : Indique que l'attribution est faite avec des @IPv4
 	\item (L3-5) Indique l'interface qui emettra les DHCP response
@@ -254,25 +254,25 @@ nft add rule filtrage_nat postrouting masquerade
 \end{itemize}
 
 \subsection{Serveur DNS}
-Marche a suivre :
+Afin de pouvoir lier un nom a une machine, nous allons installer des serveurs DNS (Domain Name Server), ces derniers feront le lien entre les @IP des différentes machines et le nom que nous leur avons attribué. Le logiciel en charge du DNS s'appelle \monosp{BIND 9}. BIND 9 est un serveur DNS open source développé par l’ISC. Il est reconnu pour sa stabilité, sa sécurité et sa compatibilité avec les standards du DNS. Doté de nombreuses fonctionnalités avancées, il prend en charge DoT (DNS over TLS), le contrôle d’accès, la journalisation fine, ainsi que la gestion en mode maître/esclave. BIND 9 est configurable via des fichiers texte et s’adapte aussi bien aux petits réseaux qu’aux infrastructures de grande taille
+
+\paragraph{Marche a suivre :}
 \begin{enumerate}
 	\item Nous allons créer 2 serveur DNS, un serveur Externe, qui va être accessible depuis l’exterieur, et un serveur DNS Interne, qui va être accessible uniquement depuis l’interieur, ca sera utile pour le wiki. 
-	\item On va commencer par créer le DNS privé puis on le clonera pour en faire un DNS public, et il faudra juste supprimer les alias créés pour le wiki et supprimer l’ACL “lan” et l’option lan dans allow-query (voir suite)
+	\item Nous allons commencer par créer le DNS privé puis nous le cloneront pour en faire un DNS public, il faudra juste supprimer les alias créés pour le wiki, supprimer l’ACL “lan” et l’option lan dans allow-query (voir suite)
 \end{enumerate}
 
 \subsubsection{Installation de BIND9}
-On installe Bind9 avec la commande suivante :
+Nous installons Bind9 via apt avec la commande suivante :
 \rootcmd{apt install bind9 dnsutils}
 
 \subsubsection{Configuration des options DNS}
-nous allons d'abord copier la config pour pouvoir la rétablir facilement en cas d'erreur :
+Nous allons d'abord copier la configuration pour pouvoir la rétablir facilement en cas d'erreur :
 \rootcmd{cd /etc/bind }
 \rootcmd{cp named.conf.options named.conf.options.bkp}
 \rootcmd{cp named.conf.local named.conf.local.bkp} 
 
-Nous allons ensuite modifier le fichier de config \monosp{/etc/bind/named.conf.options}
-et changer le \ip{0.0.0.0} dans le champ forwarders par le DNS de l'UGA : \ip{152.77.1.22}\\
-Etant donné qu'on créée actuellement le DNS privé, on va déclarer une ACL Lan, pour que seul le reseau local puisse y avoir accès (config a mettre avant le champ “option”) :
+Nous allons ensuite modifier le fichier de config \monosp{/etc/bind/named.conf.options} qui contient les options du serveur DNS.	
 \begin{configbox}{/etc/bind/named.conf.options}
 \begin{lstlisting}
 acl "lan" {
@@ -283,20 +283,23 @@ acl "lan" {
 	localnets;
 };
 options{ 
-[...] 
+	forwarders{
+		152.77.1.22
+	}
 	allow-query { lan; }; 
 };
 \end{lstlisting}
 \end{configbox}
-
+\paragraph{Détail de la configuration}
 \begin{itemize}
 	\item (L1) \monosp{acl "lan"} : On déclare une ACL appellée "lan", qui permet que seule les @Ip spécifiées auront accès au serveur DNS
 	\item (L2-7) Déclarations des sous-réseaux concernés par l'ACL
-	\item (L10) \monosp{allow-query { lan; };} indique que seuls les sous-réseaux de l'ACL peuvent query le serveur DNS
+	\item (L9-11) On change le forwarder (le serveur DNS qui résoudra les noms si le nôtre ne les contient pas) par le DNS de l'UGA
+	\item (L12) \monosp{allow-query { lan; };} indique que seuls les sous-réseaux de l'ACL peuvent query le serveur DNS
 \end{itemize}
 
 \subsubsection{Configuration de zone} 
-Nous allons desormais créer la zone bav4. Dans \monosp{/etc/bind/named.conf.local} ,on ajoute donc la zone suivante:
+Nous allons desormais créer la zone bav4.local, c'est cette derniere qui contiendra les enregistrements dns (par exemple wiki.bav4.local). Dans \monosp{/etc/bind/named.conf.local}, nous ajoutons donc la zone suivante:
 
 \begin{configbox}{/etc/bind/named.conf.local}
 \begin{lstlisting}
@@ -307,9 +310,16 @@ zone "bav4.local" {
 };
 \end{lstlisting}
 \end{configbox}
-Puis nous allons dupliquer la db.local en l’appellant db.bav4.local pour pouvoir configurer la zone : 
+\paragraph{Détail de la configuration}
+\begin{itemize}
+	\item (L2) Indique que ce serveur DNS est l'autorité principale (ou maître) pour la zone bav4.local.
+	\item (L3) Indique l'emplacement du fichier qui contient les enregistrements (voir suite)
+	\item (L4) Interdit toute mise à jour dynamique des enregistrements DNS pour la zone concernée.
+\end{itemize}
+
+Nous allons ensuite dupliquer le fichier \monosp{db.local} en l’appellant db.bav4.local pour pouvoir configurer la zone : 
 \rootcmd{cp /etc/bind/db.local /etc/bind/db.bav4.local}
-Puis, dans db.bav4.local, nous allons mettre en place la config suivante :
+Puis, dans \monosp{db.bav4.local}, nous allons mettre en place la config suivante :
 \label{subsubsec:confzonedns}
 \begin{configbox}{/etc/bind/named.conf.local}
 \begin{lstlisting}
@@ -323,9 +333,12 @@ $TTL    604800
 ;
 @               IN      NS      srv-dns.bav4.local.
 srv-dns         IN      A       192.168.110.22
+ldap			IN		A		192.168.110.30
+
+[... ajouter autant d'enregistrement que necessaire]
 \end{lstlisting}
 \end{configbox}
-
+\paragraph{Détail de la configuration}
 \begin{itemize}
 	\item (L3) Numéro de serie
 	\item (L4) Délai de rafraichissement pour la synchronisation des configurations entre plusieurs serveurs DNS
@@ -339,26 +352,27 @@ srv-dns         IN      A       192.168.110.22
 	\end{enumerate}		  
 \end{itemize}
 
-Une fois cela fait, on restart bind9 et notre serveur DNS est opérationnel :
+Une fois cela fait, relançons \monosp{bind9} et notre serveur DNS est maintenant opérationnel :
 \rootcmd{systemctl restart bind9}
 \rootcmd{systemctl enable named.service}
 
+Pour le vérifier, utilisons la commande suivante :
+\cmd{nslookup google.com}
 
 \subsubsection{Configuration de DoT (DNS over TLS}
-Afin de rajouter une couche de sécurité dans les requetes DNS, nous allons utiliser DoT (DNS over TLS) qui permet de chiffrer dnos requetes DNS :
+Afin de rajouter une couche de sécurité dans les requetes DNS, nous allons utiliser DoT (DNS over TLS) qui permet de chiffrer nos requetes DNS. Nous utiliseront par la suite \monosp{systemd-resolved} du coté client.
 
-
-\paragraph{Niveau Serveur}
+\paragraph{Niveau Serveur\\}
 \monosp{bind9 v9.18.33} supporte DoT sans besoin d'un logiciel tiers de type proxy, nous allons donc le mettre en place directement dans bind9.
 \begin{enumerate}
-	\item On crée et se place dans un nouveau dossier \monosp{ssl}
+	\item Nous créons et se place dans un nouveau dossier \monosp{ssl}
 \rootcmd{cd /etc/bind/ssl}
-	\item On genere une cle et un certificat :
+	\item Nous générons une clé et un certificat (auto-signé), nécessaires pour TLS :
 \rootcmd{openssl req -x509 -newkey rsa:2048 -nodes -keyout /etc/bind/ssl/cleDNS.key -out /etc/bind/ssl/certDNS.crt -days 365 -subj "/CN=bav4.local"
 }
-	\item On donne ensuite l'ownership de la clé a \monosp{bind}
+	\item Nous donnons ensuite l'ownership de la clé a \monosp{bind}
 \rootcmd{chown bind:bind /etc/bind/ssl/cleDNS.key}
-	\item Finalement, on modifie le fichier \monosp{/etc/bind/named.conf.options} : 
+	\item Finalement, nous modifions le fichier de configuration \monosp{/etc/bind/named.conf.options}, vu précédemment : 
 	\begin{configbox}{/etc/bind/named.conf.options}
 		\begin{lstlisting}
 tls servertls {
@@ -376,20 +390,21 @@ options {
 }
 		\end{lstlisting}
 	\end{configbox}
+	\paragraph{Détail de la configuration}
 	\begin{itemize}
-		\item (L1) On déclare un bloc tls "\monosp{servertls}"
-		\item (L2-3) On indique le chemin vers le certificat et la clé
-		\item (L10) on indique qu'on écoute les requêtes TLS liées au blocs \monosp{servertls} sur toutes les adresses
+		\item (L1) Déclaration d'un bloc tls "\monosp{servertls}"
+		\item (L2-3) Indique le chemin vers le certificat et la clé
+		\item (L10) Indique que le serveur écoute les requêtes TLS liées au blocs \monosp{servertls} sur toutes les adresses (restreintes en réalités a l'ACL "lan" vu précédemment)
 	\end{itemize}
 \end{enumerate}
 
 \paragraph{Niveau Client\\}
 
-Pour utiliser DoT sur les machines client, nous allons utiliser le package \monosp{systemd-resolved} :
+Pour utiliser DoT facilement sur les machines client, nous allons utiliser le package \monosp{systemd-resolved} :
 
 \begin{enumerate}
-	\item On installe systemd-resolved : \rootcmd{apt install systemd-resolved}
-	\item On va ensuite modifier la configuration de ce dernier :
+	\item Nous installons systemd-resolved : \rootcmd{apt install systemd-resolved}
+	\item Nous allons ensuite modifier la configuration de ce dernier :
 \begin{configbox}{/etc/systemd/resolved.conf}
 \begin{lstlisting}
 [...]
@@ -401,14 +416,15 @@ DNSOverTLS=yes
 [...]
 \end{lstlisting}
 \end{configbox}
+\paragraph{Détail de la configuration}
 \begin{itemize}
-	\item (L4) On déclare le DNS qui va être utilisé (\ip{192.168.110.24}) et son hostname (bav4.local), spécifié lors de la création du certificat vu plus haut dans ce document
-	\item (L5) On active le mode DNSOverTLS
+	\item (L4) Déclaration du DNS qui va être utilisé (\ip{192.168.110.24}) et son hostname (bav4.local), spécifié lors de la création du certificat vu plus haut dans ce document
+	\item (L5) Activation le mode DNSOverTLS
 \end{itemize}
-	\item Ensuite on copie le certificat DNS \monosp{certDNS.crt} présent sur le serveur DNS :
+	\item Nous copions ensuite le certificat DNS \monosp{certDNS.crt} présent sur le serveur DNS :
 \rootcmd{scp SERVDNS:/etc/bind/ssl/certDNS.crt /usr/local/share/ca-certificates/certDNS.crt}
-	\item Puis on reload les certificats avec : \rootcmd{update-ca-certificates}
-	\item Finalement, dans \monosp{/etc/nsswitch.conf}, on change la ligne \monosp{hosts} :  
+	\item Puis, nous rechargeons les certificats avec : \rootcmd{update-ca-certificates}
+	\item Finalement, dans \monosp{/etc/nsswitch.conf}, nous changeons la ligne \monosp{hosts} :  
 \begin{configbox}{/etc/nsswitch.conf}
 \begin{lstlisting}
 [...]
@@ -424,9 +440,9 @@ la ligne \monosp{hosts} a donc 3 options, ainsi:
 \end{enumerate}
 \end{enumerate}
 
-Finalement, on teste si resolvectl marche avec :
+Finalement, nous testons si resolvectl fonctionne avec :
 \rootcmd{resolvectl status}
-Et si les querys fonctionnent avec 
+Et la résolution de nom (chiffrée) avec 
 \rootcmd{resolvectl query google.com}
 
 Pour automatiser cette configuration, nous allons modifier les machines templates pour que les prochaines VMs utilisent DoT et créer un script d'automatisation d'installation pour les machines déja existantes.
@@ -477,7 +493,7 @@ else
 fi
 \end{lstlisting}
 \end{codebox}
-
+\paragraph{Détail du script}
 \begin{itemize}
 	\item (L4-5) Déclaration de l'@IP du serveur DNS et le nom du certificat
 	\item (L9-12) Installation et activation de \monosp{systemd-resolved}
@@ -503,7 +519,8 @@ for host in m1 m2 m3 m4; do
 done
 \end{lstlisting}
 \end{codebox}
-A chaque connection, on effectuera en plus la commande \cmd{su -c /tmp/scriptDoTClient.sh}
+A chaque connection, nous effectuerons en plus la commande \cmd{su -c /tmp/scriptDoTClient.sh}
+\paragraph{Détail du script}
 \begin{itemize}
 	 \item (L1) Itération dans différentes machines connues par \monosp{Bastion}
 	 \item (L2) Copie des fichiers nécessaires
@@ -513,7 +530,7 @@ A chaque connection, on effectuera en plus la commande \cmd{su -c /tmp/scriptDoT
 
 \subsection{Wiki}
 
-SAMUEL EXPLIQUE UN PEU LE WIKI ET SON CHOIX
+\com{SAMUEL EXPLIQUE UN PEU LE WIKI ET SON CHOIX}
 
 \subsubsection{Installation/Configuration de WikiJS}
 
