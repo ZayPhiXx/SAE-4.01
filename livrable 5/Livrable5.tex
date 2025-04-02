@@ -295,7 +295,7 @@ options{
 	\item (L10) \monosp{allow-query { lan; };} indique que seuls les sous-réseaux de l'ACL peuvent query le serveur DNS
 \end{itemize}
 
-\subsubsection{Configuration de zone}
+\subsubsection{Configuration de zone} 
 Nous allons desormais créer la zone bav4. Dans \monosp{/etc/bind/named.conf.local} ,on ajoute donc la zone suivante:
 
 \begin{configbox}{/etc/bind/named.conf.local}
@@ -310,7 +310,7 @@ zone "bav4.local" {
 Puis nous allons dupliquer la db.local en l’appellant db.bav4.local pour pouvoir configurer la zone : 
 \rootcmd{cp /etc/bind/db.local /etc/bind/db.bav4.local}
 Puis, dans db.bav4.local, nous allons mettre en place la config suivante :
-
+\label{subsubsec:confzonedns}
 \begin{configbox}{/etc/bind/named.conf.local}
 \begin{lstlisting}
 $TTL    604800
@@ -515,7 +515,9 @@ A chaque connection, on effectuera en plus la commande \cmd{su -c /tmp/scriptDoT
 
 SAMUEL EXPLIQUE UN PEU LE WIKI ET SON CHOIX
 
-\subsubsection{Prérequis}
+\subsubsection{Installation/Configuration de WikiJS}
+
+\paragraph{Prérequis\\}
 
 \begin{enumerate}
 	\item Nous allons commencer par installer les packages \monosp{curl}, \monosp{software-properties-common},  \monosp{postgreSQL}, \monosp{node.js} :
@@ -535,49 +537,90 @@ GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikiuser;
 \end{codebox}
 \end{enumerate}
 
-\subsubsection{Installation / Configuration de WikiJS}
-
+\paragraph{Installation/configuration\\}
+\com{eventuellement une intro a l'instal}
 \begin{enumerate}
-	\item On installe wikijs et on install le serveur node.js :
+	\item Nous installons wikijs et le serveur node.js :
 \cmd{mkdir /var/www/wikiJS \&\& cd /var/www/wikiJS}
 \cmd{curl -fsSL https://get.requarks.io/wiki/latest.tar.gz | tar xz -C .}
-\com{SAM : Ca me semble treeees limite pour bonnaud, pas d'update possible ?}
+\com{SAM : Ca me semble treeees limite pour bonnaud, pas d'update possible ? si oui explique pk}
 \cmd{npm install}
+	
+	\item Nous allons ensuite modifier la configuration \com{met le chemin ici et au fichier de config}
+	\begin{configbox}{\com{ton foutu chemin}}
+	\begin{lstlisting}
+db:
+  type: postgres
+  host: localhost
+  port: 5432
+  user: wikiuser
+  pass: motdepasse
+  db: wikijs
+	\end{lstlisting}
+	\end{configbox}
+	\begin{itemize}
+		\item \com{A quoi sert tout ce truc}
+	\end{itemize}
+	
+	\item Finalement, démarrons Wiki.js :
+	\cmd{node server}
 \end{enumerate}
-\cmd{npm install}
-\begin{commandout}
+
+\subsubsection{Configuration de Nginx comme Proxy}
+\com{Intro : pk on fait ca, c'est quoi et a quoi ca sert}
+
+\paragraph{Installation\\}
+Nous installons nginx via apt :
+\rootcmd{apt install nginx}
+\paragraph{Configuration du Virtual Host\\}
+
+\begin{enumerate}
+	\item Créons un fichier de configuration \com{pourquoi faire ?} :
+\rootcmd{nano /etc/nginx/sites-available/wiki}
+	\item Dans ce dernier, ajoutons le contenu suivant :
+\begin{configbox}{/etc/nginx/sites-available/wiki}
 \begin{lstlisting}
-Selem l'output
-
-RHZHIDNZNd
+db:
+  type: postgres
+  host: localhost
+  port: 5432
+  user: wikiuser
+  pass: motdepasse
+  db: wikijs
 \end{lstlisting}
-\end{commandout}
+\end{configbox}
+\begin{itemize}
+	\item \com{que fait chaque ligne t'as capté}
+\end{itemize}
+	\item On active ensuite la configuration \com{a quoi sert ce lien (le ln -s dans ta commande)}:
+	\rootcmd{ln -s /etc/nginx/sites-available/wiki /etc/nginx/sites-enabled/}
+	\rootcmd{systemctl restart nginx}
+\end{enumerate}
 
 
+\subsubsection{Accès interne}
+Pour acceder au wiki depuis n'importe quel station interne, il va falloir au préalable l'inscrire dans les enregistrement de notre serveur DNS : \underline{\ref{subsubsec:confzonedns}}
 
+\subsubsection{Accès externe}
+\com{a quoi sert - il ?}
 
+\paragraph{Génération de la clé\\}
+Si la machine ne possède pas de clé ssh, générez la :
+\cmd{ssh-keygen -t rsa -b 4096}
+Puis copiez la sur le serveur intermediaire et la machine cible \com{pas compris de quoi tu parle, si t'eclaircis un peu ca serai nickel}
 
+\paragraph{Tunnel SSH\\}
 
+Pour lancer le tunnel SSH :
+\rootcmd{ssh -J krainikv@129.88.210.230,bav-rt@192.168.42.11 bav-server@192.168.110.47 -L 9090:192.168.110.47:443 -fN}
+\begin{itemize}
+	\item `J` : Chaîne de saut SSH (jump hosts)
+	\item  `L 9090:192.168.110.47:443` : Redirige le port 9090 local vers le 443 distant
+	\item `fN` : Exécute en arrière-plan sans ouvrir de shell
+\end{itemize}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+Pour fermer le tunnel : 
+\rootcmd{pkill -f "ssh -J krainikv@129.88.210.230"}
 
 
 
