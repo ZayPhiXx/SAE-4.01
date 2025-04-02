@@ -21,7 +21,6 @@ Krainik-Saul Vladimir, Schicke Samuel,
 
 \begin{document}
 
-
 \maketitle
 
 \tableofcontents
@@ -271,10 +270,10 @@ nous allons d'abord copier la config pour pouvoir la rétablir facilement en cas
 \rootcmd{cp named.conf.options named.conf.options.bkp}
 \rootcmd{cp named.conf.local named.conf.local.bkp} 
 
-Nous allons ensuite modifier le fichier de config /etc/bind/named.conf.options
+Nous allons ensuite modifier le fichier de config \monosp{/etc/bind/named.conf.options}
 et changer le \ip{0.0.0.0} dans le champ forwarders par le DNS de l'UGA : \ip{152.77.1.22}\\
 Etant donné qu'on créée actuellement le DNS privé, on va déclarer une ACL Lan, pour que seul le reseau local puisse y avoir accès (config a mettre avant le champ “option”) :
-\begin{configbox}{/etc/bind/named.conf}
+\begin{configbox}{/etc/bind/named.conf.options}
 \begin{lstlisting}
 acl "lan" {
 	192.168.110.0/24;
@@ -297,7 +296,7 @@ options{
 \end{itemize}
 
 \subsubsection{Configuration de zone}
-Nous allons desormais créer la zone bav4. Dans /etc/bind/named.conf.local ,on ajoute donc la zone suivante:
+Nous allons desormais créer la zone bav4. Dans \monosp{/etc/bind/named.conf.local} ,on ajoute donc la zone suivante:
 
 \begin{configbox}{/etc/bind/named.conf.local}
 \begin{lstlisting}
@@ -310,7 +309,7 @@ zone "bav4.local" {
 \end{configbox}
 Puis nous allons dupliquer la db.local en l’appellant db.bav4.local pour pouvoir configurer la zone : 
 \rootcmd{cp /etc/bind/db.local /etc/bind/db.bav4.local}
-Puis, dans cdb.bav4.local, nous allons mettre en place la config suivante :
+Puis, dans db.bav4.local, nous allons mettre en place la config suivante :
 
 \begin{configbox}{/etc/bind/named.conf.local}
 \begin{lstlisting}
@@ -344,13 +343,161 @@ Une fois cela fait, on restart bind9 et notre serveur DNS est opérationnel :
 \rootcmd{systemctl restart bind9}
 \rootcmd{systemctl enable named.service}
 
-\begin{codebox}{Bash}
+
+\subsubsection{Configuration de DoT (DNS over TLS}
+Afin de rajouter une couche de sécurité dans les requetes DNS, nous allons utiliser DoT (DNS over TLS) qui permet de chiffrer dnos requetes DNS :
+
+
+\paragraph{Niveau Serveur}
+
+\begin{enumerate}
+	\item On crée et se place dans un nouveau dossier \monosp{ssl}
+\rootcmd{cd /etc/bind/ssl}
+	\item On genere une cle et un certificat :
+\rootcmd{openssl req -x509 -newkey rsa:2048 -nodes -keyout /etc/bind/ssl/cleDNS.key -out /etc/bind/ssl/certDNS.crt -days 365 -subj "/CN=bav4.local"
+}
+	\item On donne ensuite l'ownership de la clé a \monosp{bind}
+\rootcmd{chown bind:bind /etc/bind/ssl/cleDNS.key}
+	\item Finalement, on modifie le fichier \monosp{/etc/bind/named.conf.options} : 
+	\begin{configbox}{/etc/bind/named.conf.options}
+		\begin{lstlisting}
+tls servertls {
+	cert-file "/etc/bind/ssl/certDNS.crt";
+	key-file "/etc/bind/ssl/cleDNS.key";
+};
+options {
+[...]
+
+	listen-on { any; };
+	listen-on-v6 { any; };
+	listen-on tls servertls { any; };
+	allow-query { lan; };
+
+}
+		\end{lstlisting}
+	\end{configbox}
+	\begin{itemize}
+		\item (L1) On déclare un bloc tls "\monosp{servertls}"
+		\item (L2-3) On indique le chemin vers le certificat et la clé
+		\item (L10) on indique qu'on écoute les requêtes TLS liées au blocs TLS sur toutes les adresses
+	\end{itemize}
+\end{enumerate}
+
+\paragraph{Niveau Client\\}
+
+Pour utiliser DoT sur les machines client, nous allons utiliser le package \monosp{systemd-resolved} :
+
+\begin{enumerate}
+	\item On installe systemd-resolved : \rootcmd{apt install systemd-resolved}
+	\item On va ensuite modifier la configuration de ce dernier :
+\begin{configbox}{/etc/systemd/resolved.conf}
+\begin{lstlisting}
+[Resolve]
+DNS=192.168.110.24#bav4.local
+DNSOverTLS=yes
+
+[...]
+\end{lstlisting}
+\end{configbox}
+\begin{itemize}
+	\item (L1) On déclare le DNS qui va être utilisé (\ip{192.168.110.24}) et son hostname (bav4.local), spécifié lors de la création du certificat vu plus haut dans ce document
+	\item (L2) On active le mode DNSOverTLS
+\end{itemize}
+	\item Ensuite on copie le certificat DNS \monosp{certDNS.crt} présent sur le serveur DNS :
+\rootcmd{scp SERVDNS:/etc/bind/ssl/certDNS.crt /usr/local/share/ca-certificates/certDNS.crt}
+	\item Puis on reload les certificats avec : \rootcmd{update-ca-certificates}
+	\item Finalement, dans \monosp{/etc/nsswitch.conf}, on change la ligne \monosp{hosts} :  
+\begin{configbox}{/etc/nsswitch.conf}
+\begin{lstlisting}
+[...]
+hosts:	resolve	files	dns
+[...]
+\end{lstlisting}
+\end{configbox}
+la ligne \monosp{hosts} a donc 3 options, ainsi:
+\begin{enumerate}
+	\item On va tenter d'utiliser \monosp{systemd-resolved}
+	\item Si cela échoue, le système vérifie le fichier local \monosp{/etc/hosts}	
+	\item Si cela échoue, le système interroge directement un serveur DNS configuré via \monosp{/etc/resolv.conf}
+\end{enumerate}
+\end{enumerate}
+
+Finalement, on teste si resolvectl marche avec :
+\rootcmd{resolvectl status}
+Et si les querys fonctionnent avec 
+\rootcmd{resolvectl query google.com}
+
+Pour automatiser cette configuration, nous allons modifier les machines templates pour que les prochaines VMs utilisent DoT et créer un script d'automatisation d'installation pour les machines déja existantes.
+
+
+\begin{codebox}{scriptDoTClient.sh}
 \begin{lstlisting}[language=Bash]
-echo $1
-echo "Salut l equipe"
+#!/bin/bash
+
+# Definir l'adresse IP du serveur DNS et son nom de domaine
+DNS_IP="192.168.110.24"
+DNS_HOSTNAME="monserveur.local"
+
+echo "Installation de systemd-resolved..."
+
+apt update && apt install -y systemd-resolved
+
+# Activer et demarrer systemd-resolved
+systemctl enable --now systemd-resolved
+
+echo "systemd-resolved est installe et actif."
+
+# Sauvegarde des fichiers avant modification
+echo "Sauvegarde des fichiers de configuration..."
+cp /etc/systemd/resolved.conf /etc/systemd/resolved.conf.bak
+cp /etc/nsswitch.conf /etc/nsswitch.conf.bak
+echo "Changement de la config"
+rm /etc/nsswitch.conf
+rm /etc/systemd/resolved.conf
+cp /tmp/nsswitch.conf /etc/nsswitch.conf
+cp /tmp/resolved.conf /etc/systemd/resolved.conf
+cp /tmp/certDNS.crt /usr/local/share/ca-certificates/certDNS.crt
+
+
+# Redemarrer systemd-resolved pour appliquer les changements
+echo "Redemarrage de systemd-resolved..."
+systemctl restart systemd-resolved
+
+# Tester la resolution DNS
+echo "Test de resolution DNS avec systemd-resolved..."
+if resolvectl query google.com | grep -q "google.com"; then
+    echo "Test reussi : la resolution DNS fonctionne"
+else
+    echo "Echec du test DNS. Verifie la configuration."
+fi
+
+echo "Configuration terminee !"
 
 \end{lstlisting}
 \end{codebox}
 
+\begin{itemize}
+	\item (L4-5) Déclaration de l'@IP du serveur DNS et le nom du certificat
+	\item (L9-12) Installation et activation de \monosp{systemd-resolved}
+	\item (L18-19) Sauvegarde des anciens fichiers de configuration
+	\item (L21-23) Remplacement de la configuration
+	\item (L24) Ajout du certificat
+	\item (L30) Redemarrage de \monosp{systemd-resolved}
+	\item (
+\end{itemize}
+
+
+Le script suivant est a esecuter sur la machine bastion, en ayant les fichiers \monosp{nsswitch.conf}, \monosp{resolve.conf}, \monosp{scriptDoTClient.sh}, a chaque connection, on effectuera en plus la commande
+\cmd{su -c /tmp/scriptDoTClient.sh}
+
+\begin{codebox}{scriptDoTServeur.sh}
+\begin{lstlisting}[language=Bash]
+#!/bin/bash
+for host in m1 m2 m3 m4; do
+    scp scriptDoTClient.sh nsswitch.conf resolved.conf certDNS.crt $host:/tmp/
+    ssh $host
+done
+\end{lstlisting}
+\end{codebox}
 
 \end{document}
