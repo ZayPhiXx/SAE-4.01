@@ -349,7 +349,7 @@ Afin de rajouter une couche de sécurité dans les requetes DNS, nous allons uti
 
 
 \paragraph{Niveau Serveur}
-
+\monosp{bind9 v9.18.33} supporte DoT sans besoin d'un logiciel tiers de type proxy, nous allons donc le mettre en place directement dans bind9.
 \begin{enumerate}
 	\item On crée et se place dans un nouveau dossier \monosp{ssl}
 \rootcmd{cd /etc/bind/ssl}
@@ -379,7 +379,7 @@ options {
 	\begin{itemize}
 		\item (L1) On déclare un bloc tls "\monosp{servertls}"
 		\item (L2-3) On indique le chemin vers le certificat et la clé
-		\item (L10) on indique qu'on écoute les requêtes TLS liées au blocs TLS sur toutes les adresses
+		\item (L10) on indique qu'on écoute les requêtes TLS liées au blocs \monosp{servertls} sur toutes les adresses
 	\end{itemize}
 \end{enumerate}
 
@@ -392,6 +392,8 @@ Pour utiliser DoT sur les machines client, nous allons utiliser le package \mono
 	\item On va ensuite modifier la configuration de ce dernier :
 \begin{configbox}{/etc/systemd/resolved.conf}
 \begin{lstlisting}
+[...]
+
 [Resolve]
 DNS=192.168.110.24#bav4.local
 DNSOverTLS=yes
@@ -400,8 +402,8 @@ DNSOverTLS=yes
 \end{lstlisting}
 \end{configbox}
 \begin{itemize}
-	\item (L1) On déclare le DNS qui va être utilisé (\ip{192.168.110.24}) et son hostname (bav4.local), spécifié lors de la création du certificat vu plus haut dans ce document
-	\item (L2) On active le mode DNSOverTLS
+	\item (L4) On déclare le DNS qui va être utilisé (\ip{192.168.110.24}) et son hostname (bav4.local), spécifié lors de la création du certificat vu plus haut dans ce document
+	\item (L5) On active le mode DNSOverTLS
 \end{itemize}
 	\item Ensuite on copie le certificat DNS \monosp{certDNS.crt} présent sur le serveur DNS :
 \rootcmd{scp SERVDNS:/etc/bind/ssl/certDNS.crt /usr/local/share/ca-certificates/certDNS.crt}
@@ -410,14 +412,14 @@ DNSOverTLS=yes
 \begin{configbox}{/etc/nsswitch.conf}
 \begin{lstlisting}
 [...]
-hosts:	resolve	files	dns
+hosts:	files	resolve	dns
 [...]
 \end{lstlisting}
 \end{configbox}
 la ligne \monosp{hosts} a donc 3 options, ainsi:
 \begin{enumerate}
-	\item On va tenter d'utiliser \monosp{systemd-resolved}
-	\item Si cela échoue, le système vérifie le fichier local \monosp{/etc/hosts}	
+	\item Le système vérifie le fichier local \monosp{/etc/hosts}, cette methode est très rapide
+	\item Si cela échoue, le système va tenter d'utiliser \monosp{systemd-resolved}
 	\item Si cela échoue, le système interroge directement un serveur DNS configuré via \monosp{/etc/resolv.conf}
 \end{enumerate}
 \end{enumerate}
@@ -429,7 +431,7 @@ Et si les querys fonctionnent avec
 
 Pour automatiser cette configuration, nous allons modifier les machines templates pour que les prochaines VMs utilisent DoT et créer un script d'automatisation d'installation pour les machines déja existantes.
 
-
+\paragraph{Script a éxécuter sur les machines client\\}
 \begin{codebox}{scriptDoTClient.sh}
 \begin{lstlisting}[language=Bash]
 #!/bin/bash
@@ -458,6 +460,8 @@ cp /tmp/nsswitch.conf /etc/nsswitch.conf
 cp /tmp/resolved.conf /etc/systemd/resolved.conf
 cp /tmp/certDNS.crt /usr/local/share/ca-certificates/certDNS.crt
 
+echo "Update du certificat"
+update-ca-certificates
 
 # Redemarrer systemd-resolved pour appliquer les changements
 echo "Redemarrage de systemd-resolved..."
@@ -467,12 +471,10 @@ systemctl restart systemd-resolved
 echo "Test de resolution DNS avec systemd-resolved..."
 if resolvectl query google.com | grep -q "google.com"; then
     echo "Test reussi : la resolution DNS fonctionne"
+    echo "Configuration terminee !"
 else
     echo "Echec du test DNS. Verifie la configuration."
 fi
-
-echo "Configuration terminee !"
-
 \end{lstlisting}
 \end{codebox}
 
@@ -482,13 +484,15 @@ echo "Configuration terminee !"
 	\item (L18-19) Sauvegarde des anciens fichiers de configuration
 	\item (L21-23) Remplacement de la configuration
 	\item (L24) Ajout du certificat
-	\item (L30) Redemarrage de \monosp{systemd-resolved}
-	\item (
+	\item (L28) Update des certificats
+	\item (L32) Redemarrage de \monosp{systemd-resolved}
+	\item (L36-40) Test de connectivité final
 \end{itemize}
 
+\newpage
 
-Le script suivant est a esecuter sur la machine bastion, en ayant les fichiers \monosp{nsswitch.conf}, \monosp{resolve.conf}, \monosp{scriptDoTClient.sh}, a chaque connection, on effectuera en plus la commande
-\cmd{su -c /tmp/scriptDoTClient.sh}
+\paragraph{Script a éxécuter sur \monosp{Bastion}\\}
+Ce script nécéssite que la machine Bastion ait les fichiers \monosp{nsswitch.conf}, \monosp{resolve.conf}, \monosp{scriptDoTClient.sh} dans le répertoire dans lequel ce trouve le script.
 
 \begin{codebox}{scriptDoTServeur.sh}
 \begin{lstlisting}[language=Bash]
@@ -499,5 +503,11 @@ for host in m1 m2 m3 m4; do
 done
 \end{lstlisting}
 \end{codebox}
+A chaque connection, on effectuera en plus la commande \cmd{su -c /tmp/scriptDoTClient.sh}
+\begin{itemize}
+	 \item (L1) Itération dans différentes machines connues par \monosp{Bastion}
+	 \item (L2) Copie des fichiers nécessaires
+	 \item (L3) Ouverture d'une liaison ssh
+\end{itemize}
 
 \end{document}
