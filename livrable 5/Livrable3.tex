@@ -1,0 +1,351 @@
+\documentclass{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{tcolorbox}
+\usepackage{scalerel}
+\usepackage{bav4}
+
+
+\title{Livrable 3}
+\author{
+Amberny Peran, Barnouin Clement, Burellier Loucas, \\
+Krainik-Saul Vladimir, Schicke Samuel, 
+}
+\date{\today}
+
+\begin{document}
+
+
+\maketitle
+
+\tableofcontents
+\clearpage
+
+\section{Introduction}
+MiniCoffee est un groupe français spécialiste de l’univers du café, connu notamment pour ses machines à café en libre service. Pour l’année 2025, l’entreprise souhaite mettre à jour son infrastructure réseau interne en ajoutant : 
+\begin{itemize}
+	\item Divers serveurs d’utilité interne pour les employés et l'équipe informatique
+	\item Un réseau invité pour permettre à ses fournisseurs d’utiliser du matériel 		informatique sur place
+	\item Divers serveurs accessibles en ligne (site Web, serveur DNS public)
+	\item Une meilleure communication entre ses machines à café et son infrastructure, qui a été un des points faibles de l’entreprise ces dernières années.
+\end{itemize}
+Pour cette tâche, MiniCoffee a fait appel à BAV4, notre équipe d’étudiants de l’IUT2 Informatique de Grenoble.
+
+\section{Différents Tests}
+\subsection{Tests de connectivité}
+
+Pour tester l'accessibilité entre nos machines de notre architecture, nous avons du mettre en place des tests de connectivité. Ils sont composés de commandes \monosp{ping} et \monosp{traceroute} qui utilisent des adresses IP internes et externes à l'architecture.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+#!/bin/bash
+
+HOSTS=("192.168.30.1" "google.com")
+
+echo "======= Test de connectivite ======="
+
+for host in "${HOSTS[@]}"; do
+  ping -c 3 $host > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    echo "Ping $host : [OK]"
+  else
+    echo "Ping $host : [ERR] //////////////"
+  fi
+
+  traceroute -m 5 $host > /dev/null 2>&1
+  if [ $? -eq 0 ]; then
+    echo "Traceroute $host : [OK]"
+  else
+    echo "Traceroute $host : [ERR] //////////////"
+  fi
+done
+
+echo "------------------------------"
+\end{lstlisting}
+\end{codebox}
+
+
+Explications :
+\\
+Ce tableau contient la liste des adresses IP ou des noms de domaine que l’on souhaite tester. Ces hôtes peuvent être internes (ex : passerelle, serveur) ou externes (ex : site web public comme google.com).
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+HOSTS=("192.168.30.1" "google.com")
+\end{lstlisting}
+\end{codebox}
+
+Cette boucle permet d’exécuter les mêmes tests (ping et traceroute) pour chaque hôte défini dans le tableau HOSTS.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+for host in "${HOSTS[@]}"; do
+\end{lstlisting}
+\end{codebox}
+
+
+
+
+---
+Test de connectivité : Ping
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+ping -c 3 $host > /dev/null 2>&1
+\end{lstlisting}
+\end{codebox}
+
+Cette commande envoie 3 paquets ICMP (ping) à l’hôte pour vérifier s’il est atteignable. La sortie est redirigée pour ne pas encombrer l’affichage.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+if [ $? -eq 0 ]; then
+  echo "Ping $host : [OK]"
+else
+  echo "Ping $host : [ERR] ////////////////////////////////"
+fi
+\end{lstlisting}
+\end{codebox}
+
+
+Le code de retour est vérifié :
+\begin{itemize}
+	\item 0 signifie que le ping a réussi.
+	\item Toute autre valeur indique une erreur (hôte injoignable ou problème réseau).
+\end{itemize}
+
+---
+Test de chemin réseau : Traceroute
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+traceroute -m 5 $host > /dev/null 2>&1
+\end{lstlisting}
+\end{codebox}
+
+
+Cette commande trace le chemin que prennent les paquets pour atteindre l’hôte, avec un maximum de 5 sauts. Elle permet de diagnostiquer des problèmes de routage ou d’interconnexion.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+if [ $? -eq 0 ]; then
+  echo "Traceroute $host : [OK]"
+else
+  echo "Traceroute $host : [ERR] ////////////////////////////////"
+fi
+\end{lstlisting}
+\end{codebox}
+
+
+On vérifie également le retour de traceroute pour afficher le statut.
+
+\subsection{Tests de service}
+
+Pour tester les services utilisable dans l'architecture, nous utilisons des tests regroupés comme tests de services. Ils sont composés de commandes \monosp{curl}, \monosp{netcat}, \monosp{nslookup} et \monosp{dhclient}. 
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+#!/bin/bash
+
+echo "======= Test des services reseau ==========="
+
+##Tableau des test a executer
+declare -a tests=(
+  "HTTP curl -Is http://localhost/"
+  "HTTPS curl -Is https://google.com/"
+  "SSH nc -zvn 192.168.10.1 22 > /dev/null 2>&1"
+  "DNS nslookup google.com 152.77.1.22"
+  "DHCP dhclient -v -nw ens20 > /dev/null 2>&1"
+)
+
+##Boucle sur les tests
+for test in "${tests[@]}"; do
+  # Separer le nom du test et la commande
+  TEST_NAME=$(echo "$test" | awk '{print $1}')
+  CMD=$(echo "$test" | cut -d ' ' -f2-)
+
+  # Timeout
+  timeout 5 bash -c "$CMD" > /dev/null 2>&1
+  CODE=$?
+
+  # Verification du resultat
+  if [ $CODE -eq 0 ]; then
+    echo "TEST $TEST_NAME : [OK]"
+  elif [ $CODE -eq 124 ]; then
+    echo "TEST $TEST_NAME : [TIMEOUT > 5s]"
+  else
+    echo "TEST $TEST_NAME : [ERR] //////////////"
+  fi
+done
+
+echo "--------------------------------------------"
+\end{lstlisting}
+\end{codebox}
+
+Ici, on utilise un tableau tests qui contient plusieurs chaînes de caractères. Chaque chaîne commence par un nom de test (HTTP, SSH, etc.) suivi de la commande correspondante à exécuter pour vérifier si le service est disponible.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+declare -a tests=(
+  "HTTP curl -Is http://localhost/"
+  "HTTPS curl -Is https://google.com/"
+  "SSH nc -zvn 192.168.10.1 22 > /dev/null 2>&1"
+  "DNS nslookup google.com 152.77.1.22"
+  "DHCP dhclient -v -nw ens20 > /dev/null 2>&1"
+)
+\end{lstlisting}
+\end{codebox}
+
+Cette boucle for permet d’exécuter successivement chaque commande de test définie dans le tableau.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+for test in "${tests[@]}"; do
+\end{lstlisting}
+\end{codebox}
+
+---
+Séparation du nom et de la commande
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+TEST_NAME=$(echo "$test" | awk '{print $1}')
+CMD=$(echo "$test" | cut -d ' ' -f2-)
+\end{lstlisting}
+\end{codebox}
+
+
+On sépare ici :
+\begin{itemize}
+\item TEST\_NAME : le nom du test (par exemple HTTP)
+\item CMD : la commande à executer (par exemple curl -Is http://localhost/)
+\end{itemize}
+
+
+Cela permet d’afficher un message clair à l’utilisateur tout en exécutant proprement la commande associée.\\
+
+
+---
+Exécution de la commande avec un \monosp{timeout}
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+timeout 5 bash -c "$CMD" > /dev/null 2>&1
+CODE=$?
+\end{lstlisting}
+\end{codebox}
+
+
+On exécute la commande via \monosp{bash -c}, limitée à 5 secondes grâce à timeout. Toute sortie est supprimée avec \monosp{> /dev/null 2>\&1.}
+La variable \monosp{CODE} récupère le code de sortie :
+\begin{itemize}
+\item 0 : succès
+\item 124 : timeout
+\item autre : erreur
+\end{itemize}
+
+Cette ligne exécute une par une les fonctions passé dans le tableau tests.
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+eval "$CMD" | head -n 1 > /dev/null 2>&1
+\end{lstlisting}
+\end{codebox}
+
+---
+Analyse du résultat
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+if [ $CODE -eq 0 ]; then
+  echo "TEST $TEST_NAME : [OK]"
+elif [ $CODE -eq 124 ]; then
+  echo "TEST $TEST_NAME : [TIMEOUT > 5s]"
+else
+  echo "TEST $TEST_NAME : [ERR]"
+fi
+\end{lstlisting}
+\end{codebox}
+
+Selon le code de retour, le script affiche :
+
+\begin{itemize}
+\item \monosp{[OK]} si le service est accessible
+\item \monosp{[TIMEOUT > 5s]} si la commande a mis trop de temps
+\item \monosp{[ERR]} si le service ne répond pas ou la commande échoue
+\end{itemize}
+
+\subsection{Test de parefeu}
+
+Pour tester les différentes autorisations de l'architecture, nous allons utiliser un conteneur sur lesquels seront mis en place des tests ICMP, SSH, DNS, HTTP, et HTTPS et essaieront d'atteindre le premier routeur principal. Nous changerons le vnet de ce conteneur afin de voir quelles autorisations sont possibles en fonction de son vlan.
+
+Voici notre fichier de test :
+
+\begin{codebox}{Bash}
+\begin{lstlisting}[language=Bash]
+#!/bin/bash
+
+echo "======= Test du pare-feu depuis VM 192.168.110.20 ============"
+
+# Tableau des tests a executer
+declare -a tests=(
+  "ICMP ping -c 2 192.168.X.X"
+  "SSH nmap -p 22 192.168.X.X"
+  "DNS dig 192.168.X.X google.com"
+  "HTTP nmap -p 80 192.168.X.X"
+  "HTTPS nmap -p 443 192.168.X.X"
+)
+
+# Boucle sur les tests
+for test in "${tests[@]}"; do
+  # Separer le nom du test et la commande
+  TEST_NAME=$(echo "$test" | awk '{print $1}')
+  CMD=$(echo "$test" | cut -d' ' -f2-)
+
+  # Executer la commande et recuperer la sortie
+  OUTPUT=$(timeout 5 bash -c "$CMD" 2>&1)
+  CODE=$?
+
+  # Verification du resultat
+  if [[ $CODE -eq 0 && -n "$OUTPUT" ]]; then
+    echo "TEST $TEST_NAME : [OK]"
+  elif [ $CODE -eq 124 ]; then
+    echo "TEST $TEST_NAME : [TIMEOUT > 5s]"
+  else
+    echo "TEST $TEST_NAME : [ERR]"
+    echo "  -> Detail : $OUTPUT"
+  fi
+
+done
+echo "------------------------------"
+\end{lstlisting}
+\end{codebox}
+
+Nous remplacerons les X.X dans les tests par les adresses IP du routeur propre au VLAN dans lequel se trouve le conteneur.
+
+\subsubsection{Vnet Admin}
+
+Nous disposons le bridge de notre conteneur sur celui "Admin".
+
+L'adresse IP de notre routeur ici est : 192.168.120.1
+
+\begin{commandout}
+\begin{lstlisting}[language=Bash]
+=========== Test du pare-feu depuis VM 192.168.110.20 =============
+TEST ICMP : [OK]
+TEST SSH : [OK]
+TEST DNS : [OK]
+TEST HTTP : [OK]
+TEST HTTPS : [OK]
+-------------------------------------------------------------------
+\end{lstlisting}
+\end{commandout}
+
+
+\end{document}
