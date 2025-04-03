@@ -14,8 +14,8 @@
 
 \title{Livrable 5}
 \author{
-Amberny Peran, Barnouin Clement, Burellier Loucas, \\
-Krainik-Saul Vladimir, Schicke Samuel, 
+Peran AMBERNY, Clement BARNOUIN, Loucas BURELLIER, \\
+Vladimir KRAINIK--SAUL, Samuel SCHICKE 
 }
 \date{\today}
 
@@ -89,42 +89,37 @@ Voici un fichier de configuration type pour un routeur avec plusieurs interfaces
 
 \begin{configbox}{/etc/network/interfaces}
     \begin{lstlisting}
-        # Interface WAN (connectee a Internet)
-        auto eth0
-        iface eth0 inet dhcp
-        mtu 1450  # Taille MTU standard
-        # Interface LAN 1 
-        (reseau interne 192.168.1.0/24)
-        auto eth1
-        iface eth1 inet static
-            address 192.168.1.1/24
-            gateway 192.168.1.254  
-            # Facultatif, utilise uniquement si ce reseau doit 
-            sortir par une autre route
-            dns-nameservers 192.168.1.1 8.8.8.8
-            dns-domain lan1.local
-            mtu 1450  # Optimise pour les reseaux 
-            locaux rapides
+# Interface WAN (connectee a Internet)
+auto eth0
+iface eth0 inet 
+mtu 1450  # Taille MTU standard
+# Interface LAN 1 
+(reseau interne 192.168.1.0/24)
+auto eth1
+iface eth1 inet static
+    address 192.168.1.1/24
+    gateway 192.168.1.254  
+    # Facultatif, utilise uniquement si ce reseau doit 
+    sortir par une autre route
+    dns-nameservers 192.168.1.1 8.8.8.8
+    dns-domain lan1.local
+    mtu 1450  # Optimise pour les reseaux 
+    locaux rapides
 
-        # Interface LAN 2 
-        (reseau interne 10.10.0.0/24)
-        auto eth2
-        iface eth2 inet static
-            address 10.10.0.1/24
-            mtu 1450  # Optimise pour un second 
-            reseau local
+# Interface LAN 2 
+(reseau interne 10.10.0.0/24)
+auto eth2
+iface eth2 inet static
+    address 10.10.0.1/24
+    mtu 1450  # Optimise pour un second 
+    reseau local
 
-        # Activation du routage entre les reseaux
-    post-up echo 1 > /proc/sys/net/ipv4/ip_forward
+# Activation du routage entre les reseaux
+post-up echo 1 > /proc/sys/net/ipv4/ip_forward
 
-        # Ajout de routes pour permettre aux 
-        deux reseaux de communiquer entre eux
-        # Ajout de routes pour permettre aux 
-        deux reseaux de communiquer entre eux
-    post-up ip route add 192.168.1.0/24 
-    via 192.168.1.1 dev eth1 
-    post-up ip route add 10.10.0.0/24 
-    via 10.10.0.1 dev eth2 
+# Ajout de routes pour permettre aux deux reseaux de communiquer entre eux
+post-up ip route add 192.168.1.0/24 via 192.168.1.1 dev eth1 
+post-up ip route add 10.10.0.0/24 via 10.10.0.1 dev eth2 
     \end{lstlisting}
 \end{configbox}
 \paragraph{Détail de la configuration}
@@ -176,9 +171,94 @@ nft add rule filtrage_nat postrouting masquerade
 \end{lstlisting}
 \end{codebox}
 
+\subsubsection{Haute disponibilité avec Keepalived avec le routeur}
+
+Afin d’assurer la tolérance aux pannes et la continuité de service réseau, nous avons mis en place un mécanisme de \textit{haute disponibilité} (HA) entre deux routeurs à l’aide de l’outil \textbf{Keepalived}. Cette solution repose sur le protocole \textbf{VRRP} (Virtual Router Redundancy Protocol) qui permet de partager une IP virtuelle entre plusieurs machines redondants.
+
+\paragraph{Principe de fonctionnement :}
+Tout est dans la configuration d'un fichier; avec keepalived on choisit un \textbf{routeur actif (MASTER)} et un autre de secours (\textbf{BACKUP}). Le routeur actif gère l’IP virtuelle (VIP) utilisée par les clients comme passerelle. En cas de défaillance du MASTER (ex. perte d’interface, arrêt du service), le BACKUP avec la priorité qui suit, prend automatiquement le relais.
+
+\paragraph{Architecture mise en place :}
+Deux routeurs sont configurés :
+\begin{itemize}
+  \item \textbf{RT-01-Master} : MASTER avec une priorité élevée, détient la VIP
+  \item \textbf{RT-01-Backup} : BACKUP avec une priorité inférieure, prend le relais si le master tombe
+\end{itemize}
+
+Une IP virtuelle commune est utilisée par interface comme passerelle pour les clients, par exemple :
+\ip{192.168.20.1/24} pour la DMZ
+
+\paragraph{Configuration de Keepalived :}
+Sur chaque routeur, Keepalived est installé via :
+
+\rootcmd{apt install keepalived}
+
+Le fichier de configuration principal est \texttt{/etc/keepalived/keepalived.conf}. Voici un exemple de configuration
+
+\begin{configbox}{/etc/keepalived/keepalived.conf}
+	\begin{lstlisting}
+# Script de verification de la sante de nftables
+vrrp_script check_nft {
+    script "/etc/keepalived/scripts/check_nft.sh"
+    interval 3
+    fall 2
+    rise 3
+}
+
+vrrp_instance VI_WAN {
+    state MASTER
+    interface ens18  # Interface WAN
+    virtual_router_id 10
+    priority 100
+    advert_int 1
+    authentication {
+        auth_type PASS
+        auth_pass "TI4pCnEf"
+    }
+    virtual_ipaddress {
+        192.168.42.10/24
+    }
+    # Verifie que l'interface physique est bien UP
+    track_interface {
+        ens18
+    }
+    # Verifie que le pare-feu nftables est toujours charge
+    track_script {
+        check_nft
+    }
+    # Declenche des scripts selon les transitions d'etat VRRP
+    notify_master "/etc/keepalived/scripts/notify_vrrp.sh MASTER ens18"
+    notify_backup "/etc/keepalived/scripts/notify_vrrp.sh BACKUP ens18"
+    notify_fault  "/etc/keepalived/scripts/notify_vrrp.sh FAULT ens18"
+}
+    \end{lstlisting}
+\end{configbox}
+
+Sur le BACKUP, seule la ligne \texttt{state MASTER} devient \texttt{state BACKUP}, et la priorité est réduite (par exemple \texttt{priority 90}).
+
+\paragraph{Fonctionnalités avancées :}
+Nous avons renforcé la solution en ajoutant :
+\begin{itemize}
+  \item Des scripts de notification lors des changements d’état (MASTER, BACKUP, FAULT)
+  \item Une surveillance de l’état du pare-feu via un script personnalisé (\texttt{chk\_nft.sh})
+  \item Des logs structurés dans \texttt{journalctl}, au format JSON, pour faciliter l’analyse ou l’intégration dans un SIEM
+\end{itemize}
+
+\paragraph{Avantages obtenus :}
+\begin{itemize}
+  \item Continuité d’accès au réseau même si le routeur principal tombe
+  \item Pas de changement d’adresse IP pour les clients (VIP fixe)
+  \item Récupération automatique sans intervention manuelle
+\end{itemize}
+
+\paragraph{Limites possibles :}
+\begin{itemize}
+  \item Nécessite une bonne synchronisation des règles de pare-feu entre routeurs
+  \item VRRP n'inclut pas de réplication d’état, uniquement de rôle
+\end{itemize}
+
 \subsection{Serveur DHCP}
 Afin de pouvoir attribuer des @IP de façon automatique, nous allons installer un serveur DHCP, le logiciel que nous allons utiliser pour le DHCP s'appelle \monosp{Kea}. Kea est un serveur DHCP développé par l'ISC, conçu pour être plus flexible et performant que ISC DHCP. Kea supporte IPv4 et IPv6 et est particulièrement adapté aux environnements à grande échelle nécessitant une gestion avancée des adresses IP
-
 
 \subsubsection{Installation}
 \begin{itemize}
@@ -252,6 +332,40 @@ Afin de pouvoir attribuer des @IP de façon automatique, nous allons installer u
 	\item (L21-26) Configure les differents intervalles IP attribués
 	\item (L27-L39) Configure les options DHCP (@IP du serveur DNS, adresse du serveur DNS, @IP du routeur)
 \end{itemize}
+
+\subsubsection{Ajout d'un relais DHCP}
+
+Dans notre réseau, il nécessaire de permettre à des clients situés dans des sous-réseaux différents d'obtenir une configuration IP automatique à partir d’un serveur DHCP centralisé. Pour cela, nous avons mis en place un relais DHCP (\textit{DHCP relay}) sur le routeur (routeur 2 dans notre cas) assurant l’interconnexion des réseaux.
+
+\paragraph{Configuration utilisée :}
+Le paquet utilisé est \texttt{isc-dhcp-relay}, installé sur le routeur. La commande d’installation est la suivante :
+
+\rootcmd{apt install isc-dhcp-relay}
+
+Il faut ensuite adapté le fichier de configuration \monosp{/etc/default/isc-dhcp-relay} avec les paramètres suivants :
+
+\begin{itemize}
+  \item \textbf{SERVERS} : adresse IP du serveur DHCP, par exemple \texttt{192.168.110.11}
+  \item \textbf{INTERFACES} : interfaces du routeur à écouter (ex. \texttt{ens19, ens20, ens21})
+\end{itemize}
+
+\begin{configbox}{/etc/default/isc-dhcp-relay}
+\begin{lstlisting}
+# What servers should the DHCP relay forward requests to?
+SERVERS="192.168.110.11"
+
+# On what interfaces should the DHCP relay (dhrelay) serve DHCP requests?
+INTERFACES="ens19 ens20 ens21"
+\end{lstlisting}
+\end{configbox}
+
+\begin{itemize}
+	\item (L2) Adresse IP du serveur DHCP Kea
+	\item (L5) Ici les interfaces sur lequels le serveur DHCP va pour être relayer.
+\end{itemize}
+
+\paragraph{Résultat attendu :}
+Grâce à cette configuration, les clients présents dans les sous-réseaux reliés à \texttt{ens19}, \texttt{ens20} et \texttt{ens21} peuvent désormais obtenir dynamiquement leur adresse IP à partir du serveur DHCP, même s’ils ne sont pas directement connectés à lui.
 
 \subsection{Serveur DNS}
 Afin de pouvoir lier un nom a une machine, nous allons installer des serveurs DNS (Domain Name Server), ces derniers feront le lien entre les @IP des différentes machines et le nom que nous leur avons attribué. Le logiciel en charge du DNS s'appelle \monosp{BIND 9}. BIND 9 est un serveur DNS open source développé par l’ISC. Il est reconnu pour sa stabilité, sa sécurité et sa compatibilité avec les standards du DNS. Doté de nombreuses fonctionnalités avancées, il prend en charge DoT (DNS over TLS), le contrôle d’accès, la journalisation fine, ainsi que la gestion en mode maître/esclave. BIND 9 est configurable via des fichiers texte et s’adapte aussi bien aux petits réseaux qu’aux infrastructures de grande taille
