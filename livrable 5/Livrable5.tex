@@ -599,6 +599,11 @@ Nous installons nginx via apt :
 \paragraph{Configuration du Virtual Host\\}
 
 \begin{enumerate}
+	\item Nous allons d'abord générer le certificats est la clé pour pouvoir signer le wiki
+\rootcmd{sudo mkdir -p /etc/ssl/private /etc/ssl/certs
+sudo openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
+    -keyout /etc/ssl/private/wiki-js-key-no-pass.pem \
+    -out /etc/ssl/certs/wiki-js-cert.pem}
 	\item Créons un fichier de configuration :
 \rootcmd{nano /etc/nginx/sites-available/wiki}
 	\item Dans ce dernier, ajoutons le contenu suivant :
@@ -655,6 +660,88 @@ Nous installons nginx via apt :
 
 \subsubsection{Accès interne}
 Pour acceder au wiki depuis n'importe quel station interne, il va falloir au préalable l'inscrire dans les enregistrement de notre serveur DNS : \underline{\ref{subsubsec:confzonedns}}
+
+
+\subsection{SIEM}
+
+\subsubsection{Installation de Wazuh}
+\begin{enumerate}
+	\item Ajout du dépôt Wazuh
+	\rootcmd{curl -sO <https://packages.wazuh.com/key/GPG-KEY-WAZUH>}
+	Cette commande utilise curl pour télécharger la clé GPG publique de Wazuh, ce qui permet au système de vérifier l’authenticité des paquets de Wazuh lors de leur installation. 
+	\rootcmd{apt-key add GPG-KEY-WAZUH}
+	Ajoute la clé GPG téléchargée au gestionnaire de paquets APT pour valider les paquets provenant du dépôt Wazuh.
+	\rootcmd{echo 'deb <https://packages.wazuh.com/4.x/apt/> stable main' | tee /etc/apt/sources.list.d/wazuh.list}
+	Ajoute le dépôt Wazuh à la liste des sources d’APT, ce qui permet au système d’installer des paquets depuis ce dépôt.
+	\rootcmd{apt update}
+
+	\item Installation du serveur Wazuh
+	\rootcmd{apt install wazuh-manager}
+	\rootcmd{systemctl enable --now wazuh-manager}
+	Active et démarre immédiatement le service wazuh-manager pour qu’il fonctionne au démarrage du système.
+\end{enumerate}
+
+\subsubsection{Installation de l'Elastic Stack}
+
+\begin{enumerate}
+	\item Installation d'Elasticsearch
+	\rootcmd{wget -qO - https://artifacts.elastic.co/GPG-KEY-elasticsearch | apt-key add -}
+	Télécharge et ajoute la clé GPG de l’Elastic Stack afin de valider les paquets d’Elasticsearch.
+	\rootcmd{echo "deb https://artifacts.elastic.co/packages/8.x/apt stable main" | tee -a /etc/apt/sources.list.d/elastic-8.x.list}
+	Ajoute le dépôt officiel d’Elasticsearch à la liste des sources APT pour que le système puisse télécharger et installer Elasticsearch
+	\rootcmd{apt update \&\& apt install elasticsearch}
+	\rootcmd{systemctl enable --now elasticsearch}
+
+	\item Installation de Kibana
+	\rootcmd{apt install kibana}
+	\rootcmd{systemctl enable --now kibana}
+
+\end{enumerate}
+
+\subsubsection{Configuration de Filebeat sur le routeur}
+On configure Filebeat sur une machine pour pouvoir envoyer des informations(logs, traffic réseaux...) au SIEM.
+
+\begin{enumerate}
+	\item Installation de Filebeat
+	\rootcmd{apt install filebeat}
+
+	\item Configuration de Filebeat pour Elasticsearch et Kibana
+	\begin{configbox}{/etc/filebeat/filebeat.yml}
+		\begin{lstlisting}
+filebeat.inputs:
+- type: log
+  enabled: true
+  paths:
+    - /var/log/*.log
+
+output.elasticsearch:
+  hosts: ["<http://192.168.110.23:9200>"]
+  username: "elastic"
+  password: "enamont"
+setup.kibana:
+  host: "<http://192.168.110.23:5601>"
+
+		\end{lstlisting}
+	\end{configbox}
+
+	\begin{itemize}
+		\item (L1) Specification des fichiers a envoyer au SIEM
+		\item (L2) Type des fichiers envoyées
+		\item (L4) Chemin vers les fichiers à envoyées
+		\item (L8) URL vers l'interface elasticsearch
+		\item (L9) username utilisé pour se connecter à elasticsearch
+		\item (L10) Mot de passe utilisé pour se connecter à elasticsearch
+		\item (L12) URL pour acceder à kibana
+	\end{itemize}
+
+	\item Activation du module Netflow
+	\rootcmd{filebeat modules enable netflow}
+	Module qui permet d'enregistrer le traffic réseaux
+	\rootcmd{systemctl restart filebeat}
+
+
+	
+\end{enumerate}
 
 
 
