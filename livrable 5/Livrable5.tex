@@ -171,32 +171,158 @@ nft add rule filtrage_nat postrouting masquerade
 \end{lstlisting}
 \end{codebox}
 
-\subsubsection{Haute disponibilité avec Keepalived avec le routeur}
+\subsubsection{NAT et règles de pare-feu sur un routeur}
 
-Afin d’assurer la tolérance aux pannes et la continuité de service réseau, nous avons mis en place un mécanisme de \textit{haute disponibilité} (HA) entre deux routeurs à l’aide de l’outil \textbf{Keepalived}. Cette solution repose sur le protocole \textbf{VRRP} (Virtual Router Redundancy Protocol) qui permet de partager une IP virtuelle entre plusieurs machines redondants.
+Le pare-feu et la traduction d’adresses (NAT) sont essentiels au fonctionnement sécurisé du routeur. Nous avons configuré ces éléments à l’aide de \textbf{nftables}, qui remplace iptables dans les systèmes Linux récents.
+
+\paragraph{Structure des fichiers~:}
+
+Le fichier principal \texttt{/etc/nftables.conf} agit comme point d’entrée pour charger l’ensemble des règles. Son contenu est minimal et se contente d’inclure des fichiers spécialisés~:
+
+\begin{configbox}{/etc/nftables.conf}
+\begin{lstlisting}[language=bash]
+#!/usr/sbin/nft -f
+
+flush ruleset
+
+include "/etc/nftables/ruleset/sets.nft"
+include "/etc/nftables/ruleset/filter.nft"
+include "/etc/nftables/ruleset/nat.nft"
+include "/etc/nftables/ruleset/logging.nft"
+\end{lstlisting}
+\end{configbox}
+
+\paragraph{Organisation modulaire :}
+\begin{itemize}
+  \item \texttt{sets.nft} contient tous les groupes d'adresses IP (DMZ, LAN, invités, etc.).
+  \item \texttt{filter.nft} contient les règles de filtrage (input, output, forward).
+  \item \texttt{nat.nft} gère la traduction d'adresse (masquerade vers Internet).
+  \item \texttt{logging.nft} contient les chaînes pour journaliser proprement les paquets rejetés.
+\end{itemize}
+
+\paragraph{Mécanisme de NAT :}
+
+Le routeur 1 agit comme passerelle vers Internet. Pour permettre aux machines internes d'accéder à Internet, il faut faire du NAT (masquage)~:
+
+\begin{configbox}{nat.nft}
+\begin{lstlisting}
+table ip nat {
+    chain prerouting {
+        type nat hook prerouting priority dstnat;
+        policy accept;
+    }
+
+    chain postrouting {
+        type nat hook postrouting priority srcnat;
+        policy accept;
+        oifname "ens18" masquerade
+    }
+}
+\end{lstlisting}
+\end{configbox}
+
+Ici, toutes les connexions sortant via l'interface WAN \texttt{ens18} seront masquées, permettant aux machines internes d’utiliser l’IP publique du routeur.
+
+\paragraph{Filtrage par zones :}
+
+Le pare-feu distingue les interfaces selon les zones (WAN, DMZ, LAN, invités) et applique une politique stricte de contrôle~:
+
+\begin{itemize}
+    \item \textbf{INPUT} : seuls le SSH depuis des IP précises et le protocole VRRP sont autorisés.
+    \item \textbf{FORWARD} : contrôle précis des flux inter-réseaux.
+    \item \textbf{OUTPUT} : le routeur ne génère que le minimum de trafic (DNS, ICMP, VRRP).
+    \item \textbf{IPv6} : toutes les connexions IPv6 sont bloquées (table \texttt{ip6 filter\_ipv6}).
+\end{itemize}
+
+\paragraph{Fichier avec les règles du routeur 1:}
+
+Ci-dessous, les règles nftables du routeur 1~:
+
+\begin{configbox}{/etc/nftables.config}
+\begin{lstlisting}
+        chain input {
+                type filter hook input priority filter; policy drop;
+                ip version != 4 drop
+                iifname "lo" accept
+                ct state established,related accept
+                ip protocol vrrp ip daddr 224.0.0.18 accept
+                iifname { "ens18", "ens19" } ip saddr @ip_ssh_autorise tcp dport 22 ct state new jump log_input_ssh
+                jump log_input_unknown
+        }
+
+        chain output {
+                type filter hook output priority filter; policy drop;
+                ct state established,related accept
+                ip protocol icmp icmp type echo-request accept
+                ip daddr 224.0.0.18 ip protocol vrrp accept
+                udp dport 53 ct state new accept
+        }
+
+        chain forward {
+                type filter hook forward priority filter; policy drop;
+                ct state established,related accept
+                iifname "ens18" oifname "ens19" ip daddr 192.168.20.10 tcp dport { 80, 443 } ct state new accept
+                iifname "ens19" oifname "ens20" ip saddr @dns_clients ip daddr 192.168.110.22 udp dport 53 ct state new accept
+                iifname "ens20" oifname "ens18" ct state new accept
+                iifname "ens20" oifname "ens19" ip daddr @dmz_net ct state new accept
+                iifname "ens19" oifname "ens18" ip saddr @dmz_net ct state new accept
+                iifname "ens19" oifname "ens20" ip saddr @dmz_net ip daddr @internal_net jump log_forward_dmz_to_lan
+                iifname "ens19" oifname "ens21" ip saddr @dmz_net ip daddr @guest_net jump log_forward_dmz_to_guest
+                iifname "ens21" oifname "ens18" ip saddr @guest_net ct state new accept
+                iifname "ens21" ip saddr @guest_net ip daddr 192.168.30.10 udp sport 68 udp dport 67 accept
+                oifname "ens21" ip saddr 192.168.30.10 ip daddr @guest_net udp sport 67 udp dport 68 accept
+                iifname "ens21" ip saddr @guest_net ip daddr @guest_net jump log_guest_to_guest_block
+                iifname "ens21" ip daddr @all_internal_net jump log_forward_guest_to_lan
+                jump log_forward_unknown
+        }
+}
+table ip6 filter_ipv6 {
+        chain input {
+                type filter hook input priority filter; policy drop;
+        }
+
+        chain forward {
+                type filter hook forward priority filter; policy drop;
+        }
+
+        chain output {
+                type filter hook output priority filter; policy drop;
+        }
+}
+
+\end{lstlisting}
+\end{configbox}
+
+
+\paragraph{Log structuré~:}
+
+Toutes les actions de rejet sont journalisées via des chaînes spécifiques (ex.~: \texttt{log\_input\_unknown}, \texttt{log\_forward\_dmz\_to\_lan}) ce qui permet un débogage efficace.
+
+\subsubsection{Haute disponibilit\'e avec Keepalived avec le routeur}
+
+Afin d’assurer la tolérance aux pannes et la continuité de service réseau, nous avons mis en place un mécanisme de \textit{haute disponibilité} (HA) entre deux routeurs à l’aide de l’outil \textbf{Keepalived}. Cette solution repose sur le protocole \textbf{VRRP} (Virtual Router Redundancy Protocol) qui permet de partager une IP virtuelle entre plusieurs machines redondantes.
 
 \paragraph{Principe de fonctionnement :}
-Tout est dans la configuration d'un fichier; avec keepalived on choisit un \textbf{routeur actif (MASTER)} et un autre de secours (\textbf{BACKUP}). Le routeur actif gère l’IP virtuelle (VIP) utilisée par les clients comme passerelle. En cas de défaillance du MASTER (ex. perte d’interface, arrêt du service), le BACKUP avec la priorité qui suit, prend automatiquement le relais.
+Tout repose sur la configuration d'un fichier~:\ avec Keepalived, on choisit un \textbf{routeur actif (MASTER)} et un autre de secours (\textbf{BACKUP}). Le routeur actif gère l’IP virtuelle (VIP) utilisée par les clients comme passerelle. En cas de défaillance du MASTER (ex. perte d’interface, arrêt du service), le BACKUP avec la priorité suivante prend automatiquement le relais.
 
 \paragraph{Architecture mise en place :}
 Deux routeurs sont configurés :
 \begin{itemize}
-  \item \textbf{RT-01-Master} : MASTER avec une priorité élevée, détient la VIP
-  \item \textbf{RT-01-Backup} : BACKUP avec une priorité inférieure, prend le relais si le master tombe
+  \item \textbf{RT-01-Master}~: MASTER avec une priorité élevée, détient la VIP
+  \item \textbf{RT-01-Backup}~: BACKUP avec une priorité inférieure, prend le relais si le MASTER tombe
 \end{itemize}
 
-Une IP virtuelle commune est utilisée par interface comme passerelle pour les clients, par exemple :
-\ip{192.168.20.1/24} pour la DMZ
+Une IP virtuelle est utilisée comme passerelle par interface, par exemple~:\ \ip{192.168.30.1/24} pour le LAN Invité.
 
 \paragraph{Configuration de Keepalived :}
 Sur chaque routeur, Keepalived est installé via :
 
 \rootcmd{apt install keepalived}
 
-Le fichier de configuration principal est \texttt{/etc/keepalived/keepalived.conf}. Voici un exemple de configuration
+Le fichier principal de configuration est \texttt{/etc/keepalived/keepalived.conf}. Voici un exemple pour l'interface \texttt{ens21} (réseau invité)~:
 
 \begin{configbox}{/etc/keepalived/keepalived.conf}
-	\begin{lstlisting}
+\begin{lstlisting}
 # Script de verification de la sante de nftables
 vrrp_script check_nft {
     script "/etc/keepalived/scripts/check_nft.sh"
@@ -205,43 +331,82 @@ vrrp_script check_nft {
     rise 3
 }
 
-vrrp_instance VI_WAN {
+vrrp_instance VI_INVITE {
     state MASTER
-    interface ens18  # Interface WAN
-    virtual_router_id 10
+    interface ens21
+    virtual_router_id 40
     priority 100
     advert_int 1
     authentication {
         auth_type PASS
-        auth_pass "TI4pCnEf"
+        auth_pass "mdp"
     }
     virtual_ipaddress {
-        192.168.42.10/24
+        192.168.30.1/24
     }
-    # Verifie que l'interface physique est bien UP
     track_interface {
-        ens18
+        ens21
     }
-    # Verifie que le pare-feu nftables est toujours charge
     track_script {
         check_nft
     }
-    # Declenche des scripts selon les transitions d'etat VRRP
-    notify_master "/etc/keepalived/scripts/notify_vrrp.sh MASTER ens18"
-    notify_backup "/etc/keepalived/scripts/notify_vrrp.sh BACKUP ens18"
-    notify_fault  "/etc/keepalived/scripts/notify_vrrp.sh FAULT ens18"
+    notify_master "/etc/keepalived/scripts/notify_vrrp.sh MASTER ens21"
+    notify_backup "/etc/keepalived/scripts/notify_vrrp.sh BACKUP ens21"
+    notify_fault  "/etc/keepalived/scripts/notify_vrrp.sh FAULT ens21"
 }
-    \end{lstlisting}
+\end{lstlisting}
 \end{configbox}
 
-Sur le BACKUP, seule la ligne \texttt{state MASTER} devient \texttt{state BACKUP}, et la priorité est réduite (par exemple \texttt{priority 90}).
-
-\paragraph{Fonctionnalités avancées :}
-Nous avons renforcé la solution en ajoutant :
+\paragraph{Analyse de la configuration :}
 \begin{itemize}
-  \item Des scripts de notification lors des changements d’état (MASTER, BACKUP, FAULT)
-  \item Une surveillance de l’état du pare-feu via un script personnalisé (\texttt{chk\_nft.sh})
-  \item Des logs structurés dans \texttt{journalctl}, au format JSON, pour faciliter l’analyse ou l’intégration dans un SIEM
+  \item \textbf{L2}~: Déclare un bloc de supervision \texttt{vrrp\_script} nommé \texttt{check\_nft}.
+  \item \textbf{L3}~: Définit le chemin du script qui vérifie si le pare-feu nftables est correctement chargé.
+  \item \textbf{L4}~: Le script est exécuté toutes les 3 secondes.
+  \item \textbf{L5}~: Si deux échecs consécutifs ont lieu, on considère que l’état est défaillant.
+  \item \textbf{L6}~: Il faut trois vérifications réussies pour revenir à un état sain.
+  \item \textbf{L10}~: Ce routeur démarre comme MASTER.
+  \item \textbf{L11}~: Interface réseau concernée (\texttt{ens21}).
+  \item \textbf{L12}~: Identifiant unique de l’instance pour éviter les collisions.
+  \item \textbf{L13}~: Priorité élevée (100), donc ce routeur est favorisé.
+  \item \textbf{L15--L18}~: Bloc d’authentification VRRP avec mot de passe partagé.
+  \item \textbf{L19--L21}~: Attribution de l’adresse virtuelle \texttt{192.168.30.1} à cette interface.
+  \item \textbf{L22--L24}~: Vérifie que l’interface réseau est active.
+  \item \textbf{L25--L27}~: Supervision du bon fonctionnement de nftables grâce au script \texttt{check\_nft}.
+  \item \textbf{L28--L30}~: Déclenche des scripts selon le changement d’état VRRP (MASTER, BACKUP, FAULT).
+\end{itemize}
+
+Sur le routeur BACKUP, seul le champ \texttt{state MASTER} devient \texttt{state BACKUP}, et la \texttt{priority} est diminuée (par exemple \texttt{priority 90}). Une instance VRRP est configurée par interface réseau.
+
+\paragraph{Fichiers de scripts et de journalisation :}
+Les changements d'état (MASTER, BACKUP, FAULT) déclenchent des scripts dans \texttt{/etc/keepalived/scripts/}. Ces scripts journalisent les transitions dans \texttt{journalctl} au format JSON lisible par un SIEM~:
+
+\begin{itemize}
+  \item \texttt{notify_vrrp.sh}~: reçoit en argument l'état et l'interface, et logue un message structuré.
+  \begin{codebox}{/etc/keepalived/scripts/notify_vrrp.sh}
+	\begin{lstlisting}[language=Bash]
+#!/bin/bash
+
+STATE="$1"
+INTERFACE="$2"
+HOST=$(hostname)
+TIMESTAMP=$(date -Is)
+
+# Verifie que les deux arguments sont bien fournis
+if [ -z "$STATE" ] || [ -z "$INTERFACE" ]; then
+  echo "[ERROR] Usage: $0 <STATE> <INTERFACE>" >&2
+  exit 1
+fi
+
+# Recupere la VIP secondaire associee a l'interface passee
+VIP=$(ip -o addr show dev "$INTERFACE" | awk '/secondary/ {print $4}' | head -n1)
+
+# Log structure en JSON dans journalctl
+logger -t KEEPALIVED \
+  "{\"event\":\"VRRP\",\"router\":\"$HOST\",\"state\":\"$STATE\",\"interface\":\"$INTERFACE\",\"vip\":\"$VIP\",\"timestamp\":\"$TIMESTAMP\"}"
+	\end{lstlisting}
+  \end{codebox}
+	
+  \item \texttt{check_nft.sh}~: vérifie que \texttt{nft list ruleset} renvoie un jeu de règles non vide.
 \end{itemize}
 
 \paragraph{Avantages obtenus :}
@@ -249,13 +414,9 @@ Nous avons renforcé la solution en ajoutant :
   \item Continuité d’accès au réseau même si le routeur principal tombe
   \item Pas de changement d’adresse IP pour les clients (VIP fixe)
   \item Récupération automatique sans intervention manuelle
+  \item Logs compatibles avec Wazuh
 \end{itemize}
 
-\paragraph{Limites possibles :}
-\begin{itemize}
-  \item Nécessite une bonne synchronisation des règles de pare-feu entre routeurs
-  \item VRRP n'inclut pas de réplication d’état, uniquement de rôle
-\end{itemize}
 
 \subsection{Serveur DHCP}
 Afin de pouvoir attribuer des @IP de façon automatique, nous allons installer un serveur DHCP, le logiciel que nous allons utiliser pour le DHCP s'appelle \monosp{Kea}. Kea est un serveur DHCP développé par l'ISC, conçu pour être plus flexible et performant que ISC DHCP. Kea supporte IPv4 et IPv6 et est particulièrement adapté aux environnements à grande échelle nécessitant une gestion avancée des adresses IP
@@ -564,7 +725,7 @@ Pour automatiser cette configuration, nous allons modifier les machines template
 \paragraph{Script a éxécuter sur les machines client\\}
 \begin{codebox}{scriptDoTClient.sh}
 \begin{lstlisting}[language=Bash]
-#!/bin/bash
+#!/bin/
 
 # Definir l'adresse IP du serveur DNS et son nom de domaine
 DNS_IP="192.168.110.24"
