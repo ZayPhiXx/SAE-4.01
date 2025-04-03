@@ -530,7 +530,10 @@ A chaque connection, nous effectuerons en plus la commande \cmd{su -c /tmp/scrip
 
 \subsection{Wiki}
 
-\com{SAMUEL EXPLIQUE UN PEU LE WIKI ET SON CHOIX}
+Pour le wiki nous avons comparé plusieurs choix, on a choisi Wiki.js pour plusieurs raisons essentielles.
+Tout d’abord, Wiki.js est simple à installer et à administrer, tout en étant très puissant. Il fonctionne avec une base de données (PostgreSQL, MySQL, etc.), ce qui permet une gestion efficace du contenu. Son interface utilisateur moderne et intuitive facilite la navigation et la rédaction des pages.
+Ensuite, Wiki.js offre une gestion avancée des permissions, ce qui permet de contrôler précisément qui peut voir ou modifier les pages. Il prend aussi en charge plusieurs formats d’édition, dont Markdown, facilitant ainsi la contribution des utilisateurs.
+Enfin, il est open-source, léger et extensible grâce à ses nombreux modules. Il permet aussi l’intégration avec Git, ce qui est un gros avantage pour la collaboration et la gestion des versions du wiki.
 
 \subsubsection{Installation/Configuration de WikiJS}
 
@@ -540,7 +543,7 @@ A chaque connection, nous effectuerons en plus la commande \cmd{su -c /tmp/scrip
 	\item Nous allons commencer par installer les packages \monosp{curl}, \monosp{software-properties-common},  \monosp{postgreSQL}, \monosp{node.js} :
 \rootcmd{apt install -y curl software-properties-common}
 \rootcmd{curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash - }
-\com{Samuel c'est quoi ca ?}
+ajoute le dépôt de Node.js 18 sur une distribution Debian ou Ubuntu et préparer l’installation de Node.js à partir des packages officiels de NodeSource.
 \rootcmd{apt install -y nodejs postgresql}
 	\item On se connecte ensuite la base postgres : \cmd{su -i -u postgres psql}
 	\item On crée la base wikijs et l'utilisateur postgres wikiuser :
@@ -555,16 +558,15 @@ GRANT ALL PRIVILEGES ON DATABASE wikijs TO wikiuser;
 \end{enumerate}
 
 \paragraph{Installation/configuration\\}
-\com{eventuellement une intro a l'instal}
 \begin{enumerate}
 	\item Nous installons wikijs et le serveur node.js :
 \cmd{mkdir /var/www/wikiJS \&\& cd /var/www/wikiJS}
 \cmd{curl -fsSL https://get.requarks.io/wiki/latest.tar.gz | tar xz -C .}
-\com{SAM : Ca me semble treeees limite pour bonnaud, pas d'update possible ? si oui explique pk}
+télécharge et extrait la dernière version de Wiki.js dans le répertoire courant.
 \cmd{npm install}
 	
-	\item Nous allons ensuite modifier la configuration \com{met le chemin ici et au fichier de config}
-	\begin{configbox}{\com{ton foutu chemin}}
+	\item Nous allons ensuite modifier la configuration \textbf{/var/www/wikiJS/config.yml}
+	\begin{configbox}{/var/www/wikiJS/config.yml}
 	\begin{lstlisting}
 db:
   type: postgres
@@ -576,7 +578,12 @@ db:
 	\end{lstlisting}
 	\end{configbox}
 	\begin{itemize}
-		\item \com{A quoi sert tout ce truc}
+		\item (L2) specifie le type de base de données
+		\item (L3) specifie quel serveur heberge la base de données
+		\item (L4) Port utilisé pour la base de données
+		\item (L5) Nom d'utilisateur de la base de données
+		\item (L6) Mot de passe de l'utilisateur de la base de données
+		\item (L7) Nom de la base de données
 	\end{itemize}
 	
 	\item Finalement, démarrons Wiki.js :
@@ -584,7 +591,7 @@ db:
 \end{enumerate}
 
 \subsubsection{Configuration de Nginx comme Proxy}
-\com{Intro : pk on fait ca, c'est quoi et a quoi ca sert}
+Nous allons maintenant configurer un Proxy avec Nginx pour signé le wiki et avoir un accès HTTPS.
 
 \paragraph{Installation\\}
 Nous installons nginx via apt :
@@ -592,24 +599,55 @@ Nous installons nginx via apt :
 \paragraph{Configuration du Virtual Host\\}
 
 \begin{enumerate}
-	\item Créons un fichier de configuration \com{pourquoi faire ?} :
+	\item Créons un fichier de configuration :
 \rootcmd{nano /etc/nginx/sites-available/wiki}
 	\item Dans ce dernier, ajoutons le contenu suivant :
 \begin{configbox}{/etc/nginx/sites-available/wiki}
 \begin{lstlisting}
-db:
-  type: postgres
-  host: localhost
-  port: 5432
-  user: wikiuser
-  pass: motdepasse
-  db: wikijs
+	server {
+		listen 80;
+		server_name 192.168.110.47;
+		return 301 https://$host$request_uri;
+	}
+	
+	server {
+		listen 443 ssl;
+		server_name 192.168.110.47;
+	
+		ssl_certificate "/etc/ssl/certs/wiki-js-cert.pem";
+		ssl_certificate_key "/etc/ssl/private/wiki-js-key-no-pass.pem";
+	
+		ssl_protocols TLSv1.2 TLSv1.3;
+		ssl_ciphers 'HIGH:!aNULL:!MD5';
+	
+		location / {
+			proxy_pass http://192.168.110.21:3000;
+			proxy_http_version 1.1;
+			proxy_set_header Upgrade $http_upgrade;
+			proxy_set_header Connection 'upgrade';
+			proxy_set_header Host $host;
+			proxy_cache_bypass $http_upgrade;
+		}
+	}
 \end{lstlisting}
 \end{configbox}
 \begin{itemize}
-	\item \com{que fait chaque ligne t'as capté}
+	\item (L2) port sur lequel tourne le proxy
+	\item (L3) adresse ip de la machine qui heberge le proxy
+	\item (L4) Redirige toutes les requêtes HTTP vers HTTPS en utilisant une redirection permanente (301).
+	\item (L8) Écoute sur le port 443 (HTTPS) et active SSL.
+	\item (L11) Chemin vers le certificat SSL utilisé pour sécuriser la connexion.
+	\item (L12) Clé privée associée au certificat SSL.
+	\item (L14) Autorise uniquement TLS 1.2 et 1.3 (plus sécurisés).
+	\item (L15) Autorise uniquement TLS 1.2 et 1.3 (plus sécurisés).
+	\item (L18) Redirige les requêtes vers Wiki.js qui tourne sur 192.168.110.21:3000.
+	\item (L19) Utilise HTTP/1.1, nécessaire pour les connexions WebSocket.
+	\item (L20) Gère les WebSockets (indispensable pour certaines fonctionnalités).
+	\item (L21) Indique que la connexion doit être mise à niveau (pour WebSockets).
+	\item (L22) Transmet l’hôte original demandé par le client.
+	\item (L23) Désactive la mise en cache si un Upgrade est demandé (important pour les WebSockets).
 \end{itemize}
-	\item On active ensuite la configuration \com{a quoi sert ce lien (le ln -s dans ta commande)}:
+	\item On active ensuite la configuration :
 	\rootcmd{ln -s /etc/nginx/sites-available/wiki /etc/nginx/sites-enabled/}
 	\rootcmd{systemctl restart nginx}
 \end{enumerate}
@@ -617,28 +655,6 @@ db:
 
 \subsubsection{Accès interne}
 Pour acceder au wiki depuis n'importe quel station interne, il va falloir au préalable l'inscrire dans les enregistrement de notre serveur DNS : \underline{\ref{subsubsec:confzonedns}}
-
-\subsubsection{Accès externe}
-\com{a quoi sert - il ?}
-
-\paragraph{Génération de la clé\\}
-Si la machine ne possède pas de clé ssh, générez la :
-\cmd{ssh-keygen -t rsa -b 4096}
-Puis copiez la sur le serveur intermediaire et la machine cible \com{pas compris de quoi tu parle, si t'eclaircis un peu ca serai nickel}
-
-\paragraph{Tunnel SSH\\}
-
-Pour lancer le tunnel SSH :
-\rootcmd{ssh -J krainikv@129.88.210.230,bav-rt@192.168.42.11 bav-server@192.168.110.47 -L 9090:192.168.110.47:443 -fN}
-\begin{itemize}
-	\item `J` : Chaîne de saut SSH (jump hosts)
-	\item  `L 9090:192.168.110.47:443` : Redirige le port 9090 local vers le 443 distant
-	\item `fN` : Exécute en arrière-plan sans ouvrir de shell
-\end{itemize}
-
-Pour fermer le tunnel : 
-\rootcmd{pkill -f "ssh -J krainikv@129.88.210.230"}
-
 
 
 
