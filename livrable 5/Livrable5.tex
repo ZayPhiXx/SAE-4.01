@@ -795,6 +795,66 @@ A chaque connection, nous effectuerons en plus la commande \cmd{su -c /tmp/scrip
 	 \item (L3) Ouverture d'une liaison ssh
 \end{itemize}
 
+\subsection{NAS avec NFS}
+
+Afin de permettre le partage de fichiers entre plusieurs machines sur le réseau, nous avons mis en place un système NAS (Network Attached Storage) basé sur le protocole NFS (Network File System). Ce service permet à une machine (serveur) de partager un dossier que d'autres machines (clients) pourront monter localement comme un répertoire standard.
+
+Nous avons utilisé NFS pour permettre un montage simple et rapide d’un espace partagé, sans authentification complexe, dans le cadre d’un réseau local.
+
+\subsubsection{Côté serveur}
+
+Le serveur NFS est une machine dédiée disposant d’un dossier partagé localement (par exemple \texttt{/srv/partage}). Il est nécessaire d’installer le paquet suivant :
+\rootcmd{apt install nfs-kernel-server}
+
+Ensuite, on crée le répertoire partagé :
+\rootcmd{mkdir -p /srv/partage}
+
+Et on le déclare dans le fichier de configuration \texttt{/etc/exports} :
+\begin{configbox}{/etc/exports}
+\begin{lstlisting}
+/srv/partage 192.168.10.0/24(rw,sync,no_subtree_check)
+\end{lstlisting}
+\end{configbox}
+
+Chaque paramètre indique :
+\begin{itemize}
+    \item \monosp{rw} : lecture/écriture autorisée.
+    \item \monosp{sync} : les écritures sont effectuées immédiatement (pas en cache).
+    \item \monosp{no\_subtree\_check} : évite certains problèmes si le dossier est un sous-dossier monté.
+\end{itemize}
+
+Après modification, il faut recharger le service :
+\rootcmd{exportfs -ra}
+
+Et vérifier que le port NFS est bien ouvert dans le pare-feu (généralement le port 2049 en TCP/UDP).
+
+\subsubsection{Côté client}
+
+Sur chaque machine cliente, il suffit d’installer le paquet :
+\rootcmd{apt install nfs-common}
+
+On crée un point de montage local :
+\rootcmd{mkdir -p /mnt/nas}
+
+Puis on monte le partage depuis le serveur :
+\rootcmd{mount 192.168.10.1:/srv/partage /mnt/nas}
+
+Pour que ce montage soit permanent au démarrage, on ajoute la ligne suivante dans \texttt{/etc/fstab} :
+\begin{configbox}{/etc/fstab}
+\begin{lstlisting}
+192.168.10.1:/srv/partage /mnt/nas nfs defaults 0 0
+\end{lstlisting}
+\end{configbox}
+
+\paragraph{Remarques :}
+\begin{itemize}
+    \item Le montage doit être fait après que le réseau soit actif.
+    \item Il est recommandé de configurer le serveur NFS avec une IP fixe.
+    \item Ce partage fonctionne nativement entre machines Linux. Pour Windows, un client NFS est nécessaire (ex : activer la fonctionnalité ``Services pour NFS'').
+\end{itemize}
+
+
+
 
 \subsection{Wiki}
 
