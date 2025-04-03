@@ -153,23 +153,34 @@ Une fois le fichier configuré, il redémarrer le service avec
 \rootcmd{systemctl restart networking.service}
 
 \subsubsection{Configuration des routes entre les réseaux}
-\com{Pas sur de l'explication les sangs ?}
-Par défaut, une machine Linux ne fait pas passer n'importe quel paquet \com{c'est le but d'avoir des routeurs ?} comme doit le faire un routeur. On doit donc activer cette fonctionnalité qui est sous la forme d'un option dans le fichier \textbf{/etc/sysctl.conf}.
 
-\begin{command}
-    sysctl -p /etc/sysctl.conf
-\end{command}
+Pour permettre au routeur principal de rediriger correctement le trafic destiné aux sous-réseaux internes (hébergés derrière un second routeur), nous avons configuré l’interface réseau avec des routes statiques. Cela permet au système d’orienter les paquets vers le bon « next-hop » (le routeur intermédiaire).
 
-\com{<La partie qui suit devrait être dans les routeurs non ?}
-Mettre en place le NAT (fichier nft a executer) 
-\begin{codebox}{filtrage-nat}
-\begin{lstlisting}[language=Bash]
-nft add table filtrage_nat
-nft 'add chain filtrage_nat prerouting { type nat hook prerouting priority 0 ; }'
-nft 'add chain filtrage_nat postrouting { type nat hook postrouting priority 0 ; }'
-nft add rule filtrage_nat postrouting masquerade
+Cette configuration est définie dans le fichier \texttt{/etc/network/interfaces} à l’aide du mot-clé \texttt{up}, qui exécute les commandes au moment où l’interface devient active.
+
+Voici un exemple de configuration pour l’interface \texttt{ens20}, qui est connectée au réseau interne~:
+
+\begin{configbox}{/etc/network/interfaces}
+\begin{lstlisting}
+allow-hotplug ens20
+iface ens20 inet static
+        address 192.168.10.2/24
+        # ici config ...
+        # Pour le routeur 2
+        up ip route add 192.168.110.0/24 via 192.168.10.5
+        up ip route add 192.168.120.0/24 via 192.168.10.5
+        up ip route add 192.168.130.0/24 via 192.168.10.5
 \end{lstlisting}
-\end{codebox}
+\end{configbox}
+
+\begin{itemize}
+  \item \texttt{allow-hotplug ens20}~: Active automatiquement l'interface lorsque le câble réseau est branché.
+  \item \texttt{iface ens20 inet static}~: Définit une adresse IP statique pour l'interface.
+  \item \texttt{address 192.168.10.2/24}~: Adresse IP attribuée à cette interface (appartenant au réseau \texttt{192.168.10.0/24}).
+  \item \texttt{up ip route add ...}~: Ajoute manuellement des routes statiques pour atteindre les réseaux \texttt{192.168.110.0/24}, \texttt{192.168.120.0/24} et \texttt{192.168.130.0/24} via le routeur intermédiaire \texttt{192.168.10.5}.
+\end{itemize}
+
+Sans cette configuration, le routeur ne saurait pas comment atteindre ces réseaux via l'autre routeur.
 
 \subsubsection{NAT et règles de pare-feu sur un routeur}
 
@@ -240,6 +251,7 @@ Ci-dessous, les règles nftables du routeur 1~:
 
 \begin{configbox}{/etc/nftables.config}
 \begin{lstlisting}
+table inet filter {
         chain input {
                 type filter hook input priority filter; policy drop;
                 ip version != 4 drop
